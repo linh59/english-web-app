@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { LocateFixed } from '@lucide/vue'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Languages, LocateFixed } from '@lucide/vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVocabularyStore } from '@/features/vocabulary/stores/vocabulary.store'
 import AudioPlayer from '@/shared/components/AudioPlayer/AudioPlayer.vue'
@@ -27,6 +27,15 @@ const stickyRef = ref<HTMLElement>()
 const stickyHeight = ref(0)
 const currentTime = ref(0)
 const autoFollow = ref(true)
+
+// Defaults to ON (learners see the translation right away); persisted the same
+// way as theme/locale (see useTheme.ts, i18n.ts) so the choice survives reloads.
+const SHOW_TRANSLATION_STORAGE_KEY = 'showTranslation'
+const showTranslation = ref(localStorage.getItem(SHOW_TRANSLATION_STORAGE_KEY) !== 'false')
+function setShowTranslation(value: boolean) {
+  showTranslation.value = value
+  localStorage.setItem(SHOW_TRANSLATION_STORAGE_KEY, String(value))
+}
 
 let isProgrammaticScroll = false
 let programmaticScrollTimer: number | undefined
@@ -83,8 +92,15 @@ function jumpToActive() {
   if (activeSentenceId.value) scrollToSentence(activeSentenceId.value)
 }
 
-watch(activeSentenceId, (id) => {
-  if (id && autoFollow.value) scrollToSentence(id)
+// The active sentence's own height changes when the translation line
+// appears/disappears under it (previous active sentence loses it, new one
+// gains it), which shifts every element below it right as this scroll math
+// reads getBoundingClientRect() — wait for that layout to settle first so the
+// scroll target isn't computed against stale positions.
+watch(activeSentenceId, async (id) => {
+  if (!id || !autoFollow.value) return
+  await nextTick()
+  scrollToSentence(id)
 })
 
 function isTypingTarget(target: EventTarget | null) {
@@ -179,10 +195,21 @@ function handleSaveVocabulary(payload: VocabularySaveInput) {
                   <label class="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
                     <LocateFixed class="size-3.5" :class="autoFollow ? 'text-primary' : 'text-muted-foreground'" />
                     <span>{{ t('common.transcript.autoScroll') }}</span>
-                    <Switch size="sm" :checked="autoFollow" @update:checked="autoFollow = $event" />
+                    <Switch size="sm" :model-value="autoFollow" @update:model-value="autoFollow = $event" />
                   </label>
                 </TooltipTrigger>
                 <TooltipContent>{{ t('common.transcript.autoScrollHint') }}</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <label class="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                    <Languages class="size-3.5" :class="showTranslation ? 'text-primary' : 'text-muted-foreground'" />
+                    <span>{{ t('common.transcript.showTranslation') }}</span>
+                    <Switch size="sm" :model-value="showTranslation" @update:model-value="setShowTranslation" />
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent>{{ t('common.transcript.showTranslationHint') }}</TooltipContent>
               </Tooltip>
             </div>
           </TooltipProvider>
@@ -196,6 +223,7 @@ function handleSaveVocabulary(payload: VocabularySaveInput) {
         v-else
         :sentences="sentences"
         :active-sentence-id="activeSentenceId"
+        :show-translation="showTranslation"
         @sentence-click="handleSentenceClick"
         @save-vocabulary="handleSaveVocabulary"
       />

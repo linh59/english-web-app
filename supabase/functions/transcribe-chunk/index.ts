@@ -32,6 +32,7 @@ const CORS_HEADERS = {
 
 const TRANSCRIPT_PROMPT = `Transcribe this audio in English. Split the transcript into natural sentences.
 For each sentence return its start and end time in seconds from the beginning of THIS audio clip.
+Also translate each sentence into natural Vietnamese.
 Return only the sentences, no filler words or transcription notes.`
 
 const SENTENCE_SCHEMA = {
@@ -42,8 +43,9 @@ const SENTENCE_SCHEMA = {
       text: { type: Type.STRING },
       startTime: { type: Type.NUMBER },
       endTime: { type: Type.NUMBER },
+      translation: { type: Type.STRING },
     },
-    required: ['text', 'startTime', 'endTime'],
+    required: ['text', 'startTime', 'endTime', 'translation'],
   },
 }
 

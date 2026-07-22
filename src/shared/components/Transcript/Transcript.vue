@@ -8,6 +8,7 @@ import type { TranscriptSentenceData, VocabularySaveInput } from './types'
 const props = defineProps<{
   sentences: TranscriptSentenceData[]
   activeSentenceId?: string
+  showTranslation?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -95,6 +96,8 @@ function cancelPopup() {
       :sentence-id="sentence.id"
       :text="sentence.text"
       :is-active="sentence.id === activeSentenceId"
+      :translation="sentence.translation"
+      :show-translation="showTranslation ?? false"
       @click="handleSentenceClick(sentence.id)"
     />
 

@@ -8,7 +8,9 @@
     "emptyDescription": "Upload an audio file to create your first lesson.",
     "deleteTitle": "Delete this lesson?",
     "deleteDescription": "This action cannot be undone.",
-    "processingChunk": "Chunk {current}/{total}"
+    "processingChunk": "Chunk {current}/{total}",
+    "translate": "Translate to Vietnamese",
+    "translating": "Translating…"
   },
   "upload": {
     "trigger": "Upload audio",

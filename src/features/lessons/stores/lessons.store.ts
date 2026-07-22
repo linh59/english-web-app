@@ -5,9 +5,15 @@ import { useAuthStore } from '@/features/auth/stores/auth.store'
 import type { CompressionProgressCallback } from '@/shared/lib/audio-compression'
 import { compressAudioFile } from '@/shared/lib/audio-compression'
 import { chunkAudioFile } from '@/shared/lib/audio-chunking'
-import type { LessonRow, LessonSentenceRow } from '@/shared/lib/database.types'
+import type { LessonRow, LessonSentenceRow, LessonSentenceTranslationRow } from '@/shared/lib/database.types'
 import { supabase } from '@/shared/lib/supabase'
 import type { Lesson, LessonSentence } from '../types'
+
+// Only Vietnamese is generated in V1 (the app's only non-English UI language).
+// lesson_sentence_translations is keyed by `language` so more languages can be
+// added later without a schema change — this constant is the single place a
+// future second target language would need to plug in.
+const TARGET_LANGUAGE = 'vi'
 
 // Supabase Storage free-tier file size limit. Every upload is compressed
 // (see audio-compression.ts) before hitting Storage, so this now gates the
@@ -44,6 +50,7 @@ interface RawSentence {
   text: string
   startTime: number
   endTime: number
+  translation: string
 }
 
 // supabase-js's function invoke errors collapse the real cause into a generic
@@ -81,6 +88,28 @@ async function invokeTranscribeChunkWithRetry(blob: Blob, mimeType: string): Pro
   throw lastError
 }
 
+// Text-only counterpart of invokeTranscribeChunkWithRetry, used by the
+// "Translate" retrofit action (translateLesson) for lessons transcribed before
+// per-sentence translation existed. No audio involved, so no file upload/poll.
+async function invokeTranslateLessonChunkWithRetry(sentences: string[]): Promise<{ translations: string[] }> {
+  let lastError: Error = new Error('Unknown error')
+
+  for (let attempt = 0; attempt < CHUNK_MAX_ATTEMPTS; attempt++) {
+    const { data, error } = await supabase.functions.invoke('translate-lesson-chunk', {
+      body: { sentences, targetLanguage: 'Vietnamese' },
+      timeout: CHUNK_INVOKE_TIMEOUT_MS,
+    })
+    if (!error) return data
+
+    lastError = await toDetailedError(error)
+    if (attempt < CHUNK_RETRY_DELAYS_MS.length) {
+      await new Promise((resolve) => setTimeout(resolve, CHUNK_RETRY_DELAYS_MS[attempt]))
+    }
+  }
+
+  throw lastError
+}
+
 function mapLesson(row: LessonRow): Lesson {
   return {
     id: row.id,
@@ -90,6 +119,7 @@ function mapLesson(row: LessonRow): Lesson {
     durationSeconds: row.duration_seconds,
     errorMessage: row.error_message,
     processingStep: row.processing_step,
+    translationStatus: row.translation_status,
     createdAt: row.created_at,
   }
 }
@@ -168,16 +198,21 @@ export const useLessonsStore = defineStore('lessons', () => {
 
         const data = await invokeTranscribeChunkWithRetry(chunks[i].blob, chunks[i].mimeType)
         const sentences = (data.sentences as RawSentence[]).map((sentence) => ({
+          id: crypto.randomUUID(),
           text: sentence.text,
           startTime: sentence.startTime + chunks[i].startTime,
           endTime: sentence.endTime + chunks[i].startTime,
+          translation: sentence.translation,
         }))
 
         // Insert this chunk's sentences right away — if a later chunk fails
         // (e.g. Gemini quota runs out), this chunk's work is not lost and a
-        // retry can resume from the next chunk instead of starting over.
+        // retry can resume from the next chunk instead of starting over. Ids
+        // are generated client-side so the translation row below can
+        // reference them without a round-trip to read back inserted ids.
         const { error: insertError } = await supabase.from('lesson_sentences').insert(
           sentences.map((sentence, offset) => ({
+            id: sentence.id,
             lesson_id: lessonId,
             sentence_index: sentenceIndex + offset,
             chunk_index: i,
@@ -187,6 +222,16 @@ export const useLessonsStore = defineStore('lessons', () => {
           })),
         )
         if (insertError) throw insertError
+
+        const { error: translationInsertError } = await supabase.from('lesson_sentence_translations').insert(
+          sentences.map((sentence) => ({
+            sentence_id: sentence.id,
+            language: TARGET_LANGUAGE,
+            translated_text: sentence.translation,
+          })),
+        )
+        if (translationInsertError) throw translationInsertError
+
         sentenceIndex += sentences.length
       }
 
@@ -267,6 +312,97 @@ export const useLessonsStore = defineStore('lessons', () => {
     processLessonAudio(id, file)
   }
 
+  // Sentences for a lesson grouped by chunk_index, each flagged with whether it
+  // already has a translation — used by translateLesson to resume at
+  // chunk-level granularity, same as processLessonAudio does for transcription.
+  async function fetchSentencesForTranslation(
+    lessonId: string,
+  ): Promise<Map<number, { id: string; text: string; hasTranslation: boolean }[]>> {
+    const PAGE_SIZE = 1000
+    type RowWithTranslations = Pick<LessonSentenceRow, 'id' | 'chunk_index' | 'text'> & {
+      lesson_sentence_translations: Pick<LessonSentenceTranslationRow, 'language'>[]
+    }
+    const rows: RowWithTranslations[] = []
+
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('lesson_sentences')
+        .select('id, chunk_index, text, lesson_sentence_translations(language)')
+        .eq('lesson_id', lessonId)
+        .order('sentence_index', { ascending: true })
+        .range(from, from + PAGE_SIZE - 1)
+      if (error) throw error
+
+      const page = data as RowWithTranslations[]
+      rows.push(...page)
+      if (page.length < PAGE_SIZE) break
+    }
+
+    const byChunk = new Map<number, { id: string; text: string; hasTranslation: boolean }[]>()
+    for (const row of rows) {
+      const group = byChunk.get(row.chunk_index) ?? []
+      group.push({
+        id: row.id,
+        text: row.text,
+        hasTranslation: row.lesson_sentence_translations.some((t) => t.language === TARGET_LANGUAGE),
+      })
+      byChunk.set(row.chunk_index, group)
+    }
+    return byChunk
+  }
+
+  // Retrofit flow for lessons that finished transcription before per-sentence
+  // translation existed (new lessons get translations for free as part of
+  // processLessonAudio instead). Translates already-saved sentence text —
+  // no audio involved, no re-transcription, no re-spent transcription quota.
+  async function translateLesson(id: string) {
+    await updateLessonRow(id, { translation_status: 'processing' })
+
+    try {
+      const byChunk = await fetchSentencesForTranslation(id)
+
+      for (const [, group] of byChunk) {
+        if (group.every((sentence) => sentence.hasTranslation)) continue
+
+        const { translations } = await invokeTranslateLessonChunkWithRetry(group.map((s) => s.text))
+
+        const { error: upsertError } = await supabase.from('lesson_sentence_translations').upsert(
+          group.map((sentence, i) => ({
+            sentence_id: sentence.id,
+            language: TARGET_LANGUAGE,
+            translated_text: translations[i],
+          })),
+          { onConflict: 'sentence_id,language' },
+        )
+        if (upsertError) throw upsertError
+      }
+
+      await updateLessonRow(id, { translation_status: 'done' })
+    } catch (error) {
+      await updateLessonRow(id, {
+        translation_status: 'failed',
+        error_message: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  // Batched, accurate "how many sentences still lack a translation" check for
+  // a set of lessons — drives the "Translate" button on LessonCard. Reads
+  // actual data via an RPC (get_lessons_translation_progress) rather than
+  // trusting translation_status, which can get stuck at 'processing' if the
+  // tab closes mid-translateLesson run.
+  async function fetchTranslationProgress(
+    lessonIds: string[],
+  ): Promise<Map<string, { sentenceCount: number; translatedCount: number }>> {
+    if (lessonIds.length === 0) return new Map()
+
+    const { data, error } = await supabase.rpc('get_lessons_translation_progress', { lesson_ids: lessonIds })
+    if (error) throw error
+
+    const rows = data as { lesson_id: string; sentence_count: number; translated_count: number }[]
+    return new Map(rows.map((row) => [row.lesson_id, { sentenceCount: row.sentence_count, translatedCount: row.translated_count }]))
+  }
+
   async function deleteLesson(id: string) {
     const lesson = lessons.value.find((l) => l.id === id)
     if (!lesson) return
@@ -288,20 +424,28 @@ export const useLessonsStore = defineStore('lessons', () => {
   // absence of an explicit .limit() — long lessons (1000+ sentences) would
   // silently lose their tail. Page through with .range() until a page comes
   // back short.
+  //
+  // Translations are pulled in via an embedded (left-join) select rather than
+  // a separate query so lessons with no translations yet still return their
+  // sentences (translation: null) — an inner join / language filter on the
+  // embed would silently drop untranslated rows instead.
   async function fetchLessonSentences(lessonId: string): Promise<LessonSentence[]> {
     const PAGE_SIZE = 1000
-    const rows: LessonSentenceRow[] = []
+    type RowWithTranslations = LessonSentenceRow & {
+      lesson_sentence_translations: Pick<LessonSentenceTranslationRow, 'language' | 'translated_text'>[]
+    }
+    const rows: RowWithTranslations[] = []
 
     for (let from = 0; ; from += PAGE_SIZE) {
       const { data, error } = await supabase
         .from('lesson_sentences')
-        .select('*')
+        .select('*, lesson_sentence_translations(language, translated_text)')
         .eq('lesson_id', lessonId)
         .order('sentence_index', { ascending: true })
         .range(from, from + PAGE_SIZE - 1)
       if (error) throw error
 
-      const page = data as LessonSentenceRow[]
+      const page = data as RowWithTranslations[]
       rows.push(...page)
       if (page.length < PAGE_SIZE) break
     }
@@ -312,6 +456,8 @@ export const useLessonsStore = defineStore('lessons', () => {
       text: row.text,
       startTime: row.start_time,
       endTime: row.end_time,
+      translation:
+        row.lesson_sentence_translations.find((t) => t.language === TARGET_LANGUAGE)?.translated_text ?? null,
     }))
   }
 
@@ -331,5 +477,7 @@ export const useLessonsStore = defineStore('lessons', () => {
     fetchLessonById,
     fetchLessonSentences,
     getAudioSignedUrl,
+    translateLesson,
+    fetchTranslationProgress,
   }
 })

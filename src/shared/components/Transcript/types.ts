@@ -3,6 +3,7 @@ export interface TranscriptSentenceData {
   text: string
   startTime: number
   endTime: number
+  translation?: string | null
 }
 
 export interface VocabularySaveInput {

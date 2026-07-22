@@ -23,10 +23,43 @@ const router = useRouter()
 const lessonsStore = useLessonsStore()
 
 const pendingDeleteId = ref<string | null>(null)
+const translationProgress = ref(new Map<string, { sentenceCount: number; translatedCount: number }>())
 
-onMounted(() => {
-  lessonsStore.fetchLessons()
+onMounted(async () => {
+  await lessonsStore.fetchLessons()
+  await refreshTranslationProgress()
 })
+
+async function refreshTranslationProgress(lessonIds?: string[]) {
+  const ids = lessonIds ?? lessonsStore.lessons.filter((l) => l.status === 'done').map((l) => l.id)
+  if (ids.length === 0) return
+  const progress = await lessonsStore.fetchTranslationProgress(ids)
+  for (const [id, value] of progress) translationProgress.value.set(id, value)
+}
+
+function needsTranslation(lessonId: string): boolean {
+  const progress = translationProgress.value.get(lessonId)
+  return !!progress && progress.translatedCount < progress.sentenceCount
+}
+
+// Guards against duplicate Gemini calls from an impatient double-click within
+// this tab — safe either way (translateLesson upserts), just wasteful not to
+// dedupe. Deliberately NOT used to disable the button (see LessonCard): a
+// disabled state driven by translation_status could get stuck forever if the
+// tab closes mid-run, the same failure mode already seen with `status` for
+// transcription — the button must always stay clickable to recover from that.
+const translatingIds = new Set<string>()
+
+async function handleTranslate(lessonId: string) {
+  if (translatingIds.has(lessonId)) return
+  translatingIds.add(lessonId)
+  try {
+    await lessonsStore.translateLesson(lessonId)
+    await refreshTranslationProgress([lessonId])
+  } finally {
+    translatingIds.delete(lessonId)
+  }
+}
 
 function openLesson(id: string) {
   router.push(`/lessons/${id}`)
@@ -65,9 +98,12 @@ async function confirmDelete() {
         :duration-seconds="lesson.durationSeconds ?? 0"
         :status="lesson.status"
         :processing-step="lesson.processingStep"
+        :translation-status="lesson.translationStatus"
+        :needs-translation="needsTranslation(lesson.id)"
         @open="openLesson(lesson.id)"
         @delete="pendingDeleteId = lesson.id"
         @retry="lessonsStore.retryLesson(lesson.id)"
+        @translate="handleTranslate(lesson.id)"
       />
     </div>
 

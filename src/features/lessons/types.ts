@@ -1,4 +1,4 @@
-import type { LessonStatus } from '@/shared/components/LessonCard/LessonCard.vue'
+import type { LessonStatus, TranslationStatus } from '@/shared/components/LessonCard/LessonCard.vue'
 
 export interface Lesson {
   id: string
@@ -8,6 +8,7 @@ export interface Lesson {
   durationSeconds: number | null
   errorMessage: string | null
   processingStep: string | null
+  translationStatus: TranslationStatus
   createdAt: string
 }
 
@@ -17,4 +18,5 @@ export interface LessonSentence {
   text: string
   startTime: number
   endTime: number
+  translation: string | null
 }

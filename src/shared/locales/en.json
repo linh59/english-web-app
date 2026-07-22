@@ -28,6 +28,8 @@
     "autoScroll": "Auto-scroll",
     "autoScrollHint": "Keep the transcript automatically scrolled to the sentence currently playing.",
     "backToActive": "Jump to current sentence",
-    "backToActiveHint": "The playing sentence has scrolled out of view — click to jump back to it."
+    "backToActiveHint": "The playing sentence has scrolled out of view — click to jump back to it.",
+    "showTranslation": "Show translation",
+    "showTranslationHint": "Show a Vietnamese translation under the sentence currently playing."
   }
 }

@@ -28,6 +28,8 @@
     "autoScroll": "Tự động cuộn",
     "autoScrollHint": "Tự động cuộn transcript theo câu đang phát.",
     "backToActive": "Về câu đang phát",
-    "backToActiveHint": "Câu đang phát đã cuộn ra ngoài màn hình — bấm để quay lại đó."
+    "backToActiveHint": "Câu đang phát đã cuộn ra ngoài màn hình — bấm để quay lại đó.",
+    "showTranslation": "Hiện bản dịch",
+    "showTranslationHint": "Hiện bản dịch tiếng Việt dưới câu đang phát."
   }
 }

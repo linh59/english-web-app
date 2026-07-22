@@ -43,8 +43,20 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
   lý do fix. Nhờ đó scale được với audio bất kỳ độ dài nào (không còn giới hạn bởi RAM).
 - Đã verify thật với file audiobook 436MB/~5h03m (dài nhất từng test): nén xong ~45MB
   trong 78s không crash tab, đúng công thức tính toán; chunking bằng ffmpeg segment xử lý
-  đúng nhiều chunk liên tiếp (verify tới chunk 28/51 = 1677 câu trước khi người dùng chủ
-  động dừng để tiết kiệm quota Gemini — không phải lỗi).
+  đúng nhiều chunk liên tiếp — sau đó đã bấm Retry để xử lý nốt phần còn lại, bài học này
+  giờ ở trạng thái `done` hoàn chỉnh.
+- **Bản dịch tiếng Việt hiển thị dưới câu transcript đang active**: `transcribe-chunk`
+  sinh thêm field `translation` cho mỗi câu ngay trong cùng 1 lệnh gọi Gemini đã có (không
+  tốn thêm quota, không gọi AI lúc user học — xem [[decisions]]). Lưu ở bảng riêng
+  `lesson_sentence_translations` (không phải cột trong `lesson_sentences`) để mở rộng đa
+  ngôn ngữ sau này không cần migrate. Toggle bật/tắt hiển thị (mặc định BẬT, persist qua
+  localStorage giống theme/locale). Bài học cũ (đã `done` trước khi có tính năng này) có
+  nút "Dịch lại" trên `LessonCard` — dịch text đã lưu qua Edge Function mới
+  `translate-lesson-chunk` (text-only, không audio, không transcribe lại), resume theo
+  `chunk_index` giống cơ chế Retry. Nút "Dịch lại" hiện/ẩn dựa trên **đếm thật** số câu
+  chưa có bản dịch (RPC `get_lessons_translation_progress`), không dựa vào cột
+  `translation_status` (cột này chỉ để hiện spinner — dễ bị kẹt sai nếu tab đóng giữa
+  chừng, xem [[decisions]]).
 
 ## Trạng thái từng phần
 | Phần | Trạng thái |
@@ -58,6 +70,7 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
 | `fetchLessonSentences` phân trang | Hoàn thành, đã fix bug 1000-row |
 | Tự động nén audio trước upload | Hoàn thành, đã test thật (file 436MB + file ngắn full pipeline) |
 | Chunking bằng ffmpeg segment (thay decode PCM) | Hoàn thành, đã test thật (không còn lỗi "Unable to decode audio data" với file dài) |
+| Bản dịch câu (hiển thị + retrofit "Dịch lại") | Hoàn thành, đã test thật (pipeline mới, toggle, retrofit, resume sau khi kẹt trạng thái, RLS) |
 
 ## Bước tiếp theo cần làm
 1. Loop-theo-câu (A-B loop) — tính năng học lõi cho phương pháp Effortless English,
@@ -65,12 +78,12 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
 2. Tuỳ chỉnh cỡ chữ transcript theo ý người dùng (Phase 3, chưa làm).
 3. Cấu hình custom SMTP cho Supabase Auth trước khi có nhiều người dùng thật (rate
    limit mặc định thấp — đã ghi nhận từ trước, vẫn còn hiệu lực, chưa làm).
-4. Bài học test thật "Diary of a Wimpy Kid 9 The Long Haul" (tài khoản
-   `linhnguyenphuong59+test1@gmail.com`) đang ở trạng thái `failed` dừng giữa chừng ở
-   chunk 28/51 (dừng chủ động để tiết kiệm quota, không phải lỗi) — có thể bấm Retry
-   trên `LessonCard` để tiếp tục xử lý 23 chunk còn lại bất cứ lúc nào, không tốn lại
-   quota cho phần đã xong.
-5. File cực dài bất thường (nhiều giờ hơn nữa) về lý thuyết vẫn có thể vượt 50MB dù đã
+4. File cực dài bất thường (nhiều giờ hơn nữa) về lý thuyết vẫn có thể vượt 50MB dù đã
    ở bitrate floor thấp nhất (16kbps) — hiện chỉ báo lỗi rõ ràng yêu cầu người dùng chia
    nhỏ file, chưa có giải pháp tự động (vd tăng giới hạn Storage nếu plan cho phép, hoặc
    chia nhiều file).
+5. Các bài học `done` có sẵn từ trước khi có tính năng dịch (vd 2 audiobook Diary of a
+   Wimpy Kid trong tài khoản test) chưa có bản dịch cho tới khi người dùng tự bấm "Dịch
+   lại" trên `LessonCard` — mỗi bài ~17-18 chunk nên tốn tương ứng ~17-18 lệnh gọi Gemini
+   nếu bấm (chưa bấm, cố tình để dành quota, chỉ verify luồng "Dịch lại" trên 1 bài học
+   test ngắn 4 câu).

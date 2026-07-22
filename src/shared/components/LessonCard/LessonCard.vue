@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2, RotateCw, Trash2 } from '@lucide/vue'
+import { Languages, Loader2, RotateCw, Trash2 } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Badge } from '@/shared/components/ui/badge'
@@ -9,18 +9,26 @@ import Progress from '@/shared/components/Progress/Progress.vue'
 import { formatDuration } from '@/shared/lib/format'
 
 export type LessonStatus = 'pending' | 'processing' | 'done' | 'failed'
+export type TranslationStatus = 'pending' | 'processing' | 'done' | 'failed'
 
 const props = defineProps<{
   title: string
   durationSeconds: number
   status: LessonStatus
   processingStep?: string | null
+  translationStatus?: TranslationStatus
+  // Computed from actual sentence/translation counts (see
+  // lessons.store.ts::fetchTranslationProgress), not from translationStatus —
+  // translationStatus can get stuck at 'processing' if the tab closes mid-run,
+  // the same failure mode already seen with `status` for transcription.
+  needsTranslation?: boolean
 }>()
 
 defineEmits<{
   open: []
   delete: []
   retry: []
+  translate: []
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
@@ -59,6 +67,17 @@ const chunkProgress = computed(() => {
             @click.stop="$emit('retry')"
           >
             <RotateCw />
+          </Button>
+          <Button
+            v-if="status === 'done' && (needsTranslation || translationStatus === 'processing')"
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="translationStatus === 'processing' ? t('lessons.library.translating') : t('lessons.library.translate')"
+            class="text-muted-foreground hover:text-foreground"
+            @click.stop="$emit('translate')"
+          >
+            <Loader2 v-if="translationStatus === 'processing'" class="size-4 animate-spin" />
+            <Languages v-else />
           </Button>
           <Button
             variant="ghost"

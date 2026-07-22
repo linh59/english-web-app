@@ -8,7 +8,9 @@
     "emptyDescription": "Upload file audio để tạo bài học đầu tiên.",
     "deleteTitle": "Xóa bài học này?",
     "deleteDescription": "Hành động này không thể hoàn tác.",
-    "processingChunk": "Đoạn {current}/{total}"
+    "processingChunk": "Đoạn {current}/{total}",
+    "translate": "Dịch sang tiếng Việt",
+    "translating": "Đang dịch…"
   },
   "upload": {
     "trigger": "Upload audio",

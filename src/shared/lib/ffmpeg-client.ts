@@ -2,10 +2,15 @@
 // (pre-upload compression) and audio-chunking.ts (segmenting for
 // transcription) so the ~31MB core is only ever loaded once per session,
 // whichever feature triggers it first.
+//
+// Core is loaded from jsDelivr (pinned to the @ffmpeg/core version in
+// package.json) rather than self-hosted from public/ — Cloudflare Pages
+// rejects any deployed file over 25 MiB, and the core .wasm is ~31 MiB.
+// See decisions.md for the full history of this decision.
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { toBlobURL } from '@ffmpeg/util'
 
-const CORE_BASE_URL = '/ffmpeg'
+const CORE_BASE_URL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm'
 
 export type FfmpegLoadProgressCallback = (progress: number) => void
 

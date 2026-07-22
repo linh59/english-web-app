@@ -44,9 +44,18 @@ description: Log các quyết định kiến trúc/kỹ thuật quan trọng và
   bị loại vì nó nén theo thời gian thực (phát lại toàn bộ audio) — file 5 tiếng sẽ mất
   5 tiếng thực để nén, không khả thi. Core đa luồng (`@ffmpeg/core-mt`) cần header
   COOP/COEP toàn site (rủi ro hạ tầng), nên chọn core đơn luồng (chậm hơn nhưng không
-  cần đổi gì ở hosting) — đúng tinh thần ưu tiên đơn giản/ổn định. Core được self-host
-  qua `scripts/copy-ffmpeg-core.mjs` (postinstall, copy vào `public/ffmpeg/`, gitignored)
-  thay vì load từ CDN lúc runtime.
+  cần đổi gì ở hosting) — đúng tinh thần ưu tiên đơn giản/ổn định.
+  ⚠️ Ban đầu core được self-host qua `scripts/copy-ffmpeg-core.mjs` (postinstall,
+  copy vào `public/ffmpeg/`, gitignored) để không phụ thuộc CDN ngoài lúc runtime.
+  Đã đổi lại sau khi deploy thật lên Cloudflare Pages bị chặn cứng ("Pages only
+  supports files up to 25 MiB") — `ffmpeg-core.wasm` ~30.7MB nằm trong `public/` bị
+  Vite copy thẳng vào output deploy, vượt giới hạn platform không cách nào lách được
+  dù file chỉ lazy-load lúc runtime. Chuyển sang load core từ jsDelivr
+  (`https://cdn.jsdelivr.net/npm/@ffmpeg/core@<version>/dist/esm/`, pin đúng version
+  khớp `@ffmpeg/core` trong `package.json`) — đúng pattern chính thức của ffmpeg.wasm
+  docs, chấp nhận đánh đổi quay lại phụ thuộc CDN bên thứ ba vì jsDelivr có SLA cao
+  (multi-CDN backing) và core vẫn chỉ được fetch lazy khi người dùng thực sự upload
+  audio, không nằm trên critical path của app.
 - **Format nén: mono AAC/`.m4a`, không phải Opus/WebM dù Opus tiết kiệm bit hơn ở
   bitrate thấp**: file nén được phát trực tiếp qua `<audio>` (không chỉ dùng để
   transcribe), mà Opus-trong-WebM không chạy ổn định trên Safari. AAC/`.m4a` phát được
