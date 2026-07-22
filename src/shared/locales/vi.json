@@ -1,0 +1,33 @@
+{
+  "save": "Lưu",
+  "cancel": "Hủy",
+  "delete": "Xóa",
+  "close": "Đóng",
+  "confirm": "Xác nhận",
+  "loading": "Đang tải...",
+  "search": "Tìm kiếm",
+  "error": {
+    "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+    "network": "Lỗi kết nối mạng. Kiểm tra mạng và thử lại."
+  },
+  "theme": {
+    "light": "Sáng",
+    "dark": "Tối"
+  },
+  "language": {
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt"
+  },
+  "audioPlayer": {
+    "play": "Phát",
+    "pause": "Tạm dừng"
+  },
+  "transcript": {
+    "sentenceCounter": "Câu {current}/{total}",
+    "sentenceCountTotal": "{total} câu",
+    "autoScroll": "Tự động cuộn",
+    "autoScrollHint": "Tự động cuộn transcript theo câu đang phát.",
+    "backToActive": "Về câu đang phát",
+    "backToActiveHint": "Câu đang phát đã cuộn ra ngoài màn hình — bấm để quay lại đó."
+  }
+}

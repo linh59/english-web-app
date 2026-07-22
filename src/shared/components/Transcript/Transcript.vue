@@ -1,0 +1,118 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue'
+import VocabularyPopup from '../VocabularyPopup/VocabularyPopup.vue'
+import SelectedTextToolbar from './SelectedTextToolbar.vue'
+import TranscriptSentence from './TranscriptSentence.vue'
+import type { TranscriptSentenceData, VocabularySaveInput } from './types'
+
+const props = defineProps<{
+  sentences: TranscriptSentenceData[]
+  activeSentenceId?: string
+}>()
+
+const emit = defineEmits<{
+  'sentence-click': [id: string]
+  'save-vocabulary': [payload: VocabularySaveInput]
+}>()
+
+const containerEl = ref<HTMLElement>()
+const selection = ref<{ text: string; sentenceText: string; top: number; left: number } | null>(null)
+const showPopup = ref(false)
+
+function findSentenceId(node: Node | null): string | undefined {
+  let el = node instanceof Element ? node : node?.parentElement ?? null
+  while (el && !(el instanceof HTMLElement && el.dataset.sentenceId)) {
+    el = el.parentElement
+  }
+  return el instanceof HTMLElement ? el.dataset.sentenceId : undefined
+}
+
+function onMouseUp() {
+  const sel = window.getSelection()
+  const text = sel?.toString().trim()
+  if (!sel || !text || sel.rangeCount === 0) {
+    return
+  }
+
+  const range = sel.getRangeAt(0)
+  const rect = range.getBoundingClientRect()
+  const containerRect = containerEl.value!.getBoundingClientRect()
+  const sentenceId = findSentenceId(range.startContainer)
+  const sentence = props.sentences.find((s) => s.id === sentenceId)
+
+  selection.value = {
+    text,
+    sentenceText: sentence?.text ?? text,
+    top: rect.top - containerRect.top,
+    left: rect.left - containerRect.left + rect.width / 2,
+  }
+  showPopup.value = false
+}
+
+function onDocumentMouseDown(event: MouseEvent) {
+  if (!containerEl.value?.contains(event.target as Node)) {
+    selection.value = null
+    showPopup.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', onDocumentMouseDown))
+onUnmounted(() => document.removeEventListener('mousedown', onDocumentMouseDown))
+
+function handleSentenceClick(id: string) {
+  // A double-click to select a word also fires a click event on the sentence.
+  // Ignore it so seeking doesn't clobber the selection the user just made.
+  const hasActiveSelection = (window.getSelection()?.toString().trim().length ?? 0) > 0
+  if (hasActiveSelection) return
+
+  selection.value = null
+  showPopup.value = false
+  emit('sentence-click', id)
+}
+
+function handleSave(meaning: string) {
+  if (!selection.value) return
+  emit('save-vocabulary', {
+    word: selection.value.text,
+    meaning,
+    exampleSentence: selection.value.sentenceText,
+  })
+  selection.value = null
+  showPopup.value = false
+}
+
+function cancelPopup() {
+  selection.value = null
+  showPopup.value = false
+}
+</script>
+
+<template>
+  <div ref="containerEl" class="relative mx-auto max-w-[70ch]" @mouseup="onMouseUp">
+    <TranscriptSentence
+      v-for="sentence in sentences"
+      :key="sentence.id"
+      :sentence-id="sentence.id"
+      :text="sentence.text"
+      :is-active="sentence.id === activeSentenceId"
+      @click="handleSentenceClick(sentence.id)"
+    />
+
+    <SelectedTextToolbar
+      v-if="selection && !showPopup"
+      :top="selection.top"
+      :left="selection.left"
+      @save="showPopup = true"
+    />
+
+    <VocabularyPopup
+      v-if="selection && showPopup"
+      :word="selection.text"
+      :example-sentence="selection.sentenceText"
+      :top="selection.top"
+      :left="selection.left"
+      @save="handleSave"
+      @cancel="cancelPopup"
+    />
+  </div>
+</template>

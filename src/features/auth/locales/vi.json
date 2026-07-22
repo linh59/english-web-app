@@ -1,0 +1,22 @@
+{
+  "login": {
+    "title": "Đăng nhập",
+    "subtitle": "Tiếp tục học tiếng Anh",
+    "emailLabel": "Email",
+    "passwordLabel": "Mật khẩu",
+    "submit": "Đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "signupLink": "Đăng ký"
+  },
+  "signup": {
+    "title": "Tạo tài khoản",
+    "subtitle": "Bắt đầu học tiếng Anh từ audio thật",
+    "emailLabel": "Email",
+    "passwordLabel": "Mật khẩu",
+    "submit": "Tạo tài khoản",
+    "hasAccount": "Đã có tài khoản?",
+    "loginLink": "Đăng nhập",
+    "checkEmail": "Kiểm tra email để xác nhận tài khoản trước khi đăng nhập."
+  },
+  "logout": "Đăng xuất"
+}

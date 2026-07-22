@@ -1,0 +1,22 @@
+{
+  "login": {
+    "title": "Log in",
+    "subtitle": "Continue learning English",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submit": "Log in",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign up"
+  },
+  "signup": {
+    "title": "Create your account",
+    "subtitle": "Start learning English from real audio",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submit": "Create account",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Log in",
+    "checkEmail": "Check your email to confirm your account before logging in."
+  },
+  "logout": "Log out"
+}

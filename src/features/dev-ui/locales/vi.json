@@ -1,0 +1,33 @@
+{
+  "pageTitle": "Design System",
+  "searchPlaceholder": "Tìm component...",
+  "noResults": "Không tìm thấy component phù hợp.",
+  "toggleSidebar": "Ẩn/hiện điều hướng",
+  "sections": {
+    "colors": { "title": "Màu sắc", "description": "Token màu cho nền, chữ, viền và trạng thái." },
+    "typography": { "title": "Typography", "description": "Thang chữ dùng trong toàn bộ ứng dụng." },
+    "tokens": { "title": "Spacing, Radius & Motion", "description": "Thang dùng chung cho spacing, bo góc, shadow, icon, easing và z-index." },
+    "buttons": { "title": "Button", "description": "Variant, kích thước và trạng thái." },
+    "inputs": { "title": "Input", "description": "Text, password, search và textarea." },
+    "cards": { "title": "Card", "description": "Card cơ bản và bố cục nội dung." },
+    "badges": { "title": "Badge", "description": "Nhãn trạng thái." },
+    "alerts": { "title": "Alert", "description": "Thông báo phản hồi." },
+    "dialogs": { "title": "Dialog", "description": "Confirm, xóa và thông tin." },
+    "menus": { "title": "Menu", "description": "Dropdown, popover và tooltip." },
+    "navbar": { "title": "Navbar", "description": "Thanh điều hướng kèm chuyển theme và ngôn ngữ." },
+    "loading": { "title": "Loading", "description": "Spinner và skeleton." },
+    "emptyState": { "title": "Empty State", "description": "Chưa có bài học, chưa có từ vựng, không có kết quả." },
+    "icons": { "title": "Icon", "description": "Danh sách icon đang dùng, có tìm kiếm." },
+    "lessonCard": { "title": "Lesson Card", "description": "Một bài học trong thư viện." },
+    "audioPlayer": { "title": "Audio Player", "description": "Điều khiển play, tua, tốc độ và lặp lại." },
+    "transcript": { "title": "Transcript", "description": "Danh sách câu. Bôi đen để lưu từ vựng." },
+    "vocabulary": { "title": "Vocabulary Card", "description": "Một từ đã lưu kèm nghĩa và câu ví dụ." },
+    "progress": { "title": "Progress", "description": "Tiến độ nghe trong bài học." }
+  },
+  "demo": {
+    "lessonTitle": "Hội thoại hằng ngày — Tập 12",
+    "vocabWord": "nevertheless",
+    "vocabMeaning": "tuy nhiên, mặc dù vậy",
+    "vocabExample": "It was raining, nevertheless we went for a walk."
+  }
+}

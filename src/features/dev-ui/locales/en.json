@@ -1,0 +1,33 @@
+{
+  "pageTitle": "Design System",
+  "searchPlaceholder": "Search components...",
+  "noResults": "No components match your search.",
+  "toggleSidebar": "Toggle navigation",
+  "sections": {
+    "colors": { "title": "Colors", "description": "Semantic color tokens for background, text, border and state." },
+    "typography": { "title": "Typography", "description": "Type scale used across the app." },
+    "tokens": { "title": "Spacing, Radius & Motion", "description": "Shared scales for spacing, radius, shadow, icon size, easing and z-index." },
+    "buttons": { "title": "Buttons", "description": "Variants, sizes and states." },
+    "inputs": { "title": "Inputs", "description": "Text, password, search and textarea fields." },
+    "cards": { "title": "Cards", "description": "Base card and content layout." },
+    "badges": { "title": "Badges", "description": "Status labels." },
+    "alerts": { "title": "Alerts", "description": "Inline feedback messages." },
+    "dialogs": { "title": "Dialogs", "description": "Confirm, delete and info dialogs." },
+    "menus": { "title": "Menus", "description": "Dropdown, popover and tooltip." },
+    "navbar": { "title": "Navbar", "description": "App navigation bar with theme and language switcher." },
+    "loading": { "title": "Loading", "description": "Spinner and skeleton placeholders." },
+    "emptyState": { "title": "Empty States", "description": "No lesson, no vocabulary, no search result." },
+    "icons": { "title": "Icons", "description": "Searchable list of icons in use." },
+    "lessonCard": { "title": "Lesson Card", "description": "A lesson in the library list." },
+    "audioPlayer": { "title": "Audio Player", "description": "Play, seek, speed and loop controls." },
+    "transcript": { "title": "Transcript", "description": "Sentence list. Select text to save vocabulary." },
+    "vocabulary": { "title": "Vocabulary Card", "description": "A saved word with meaning and example." },
+    "progress": { "title": "Progress", "description": "Listening progress within a lesson." }
+  },
+  "demo": {
+    "lessonTitle": "Everyday Conversations — Episode 12",
+    "vocabWord": "nevertheless",
+    "vocabMeaning": "in spite of that; even so",
+    "vocabExample": "It was raining, nevertheless we went for a walk."
+  }
+}

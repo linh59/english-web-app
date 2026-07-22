@@ -1,0 +1,33 @@
+{
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "close": "Close",
+  "confirm": "Confirm",
+  "loading": "Loading...",
+  "search": "Search",
+  "error": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Check your connection and try again."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "en": "English",
+    "vi": "Vietnamese"
+  },
+  "audioPlayer": {
+    "play": "Play",
+    "pause": "Pause"
+  },
+  "transcript": {
+    "sentenceCounter": "Sentence {current} of {total}",
+    "sentenceCountTotal": "{total} sentences",
+    "autoScroll": "Auto-scroll",
+    "autoScrollHint": "Keep the transcript automatically scrolled to the sentence currently playing.",
+    "backToActive": "Jump to current sentence",
+    "backToActiveHint": "The playing sentence has scrolled out of view — click to jump back to it."
+  }
+}

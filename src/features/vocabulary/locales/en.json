@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "title": "Vocabulary"
+  },
+  "page": {
+    "title": "Vocabulary",
+    "searchPlaceholder": "Search vocabulary...",
+    "emptyTitle": "No vocabulary yet",
+    "emptyDescription": "Select a word or phrase while studying to save it here.",
+    "noResultsTitle": "No results"
+  }
+}

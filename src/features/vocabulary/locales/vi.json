@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "title": "Từ vựng"
+  },
+  "page": {
+    "title": "Từ vựng",
+    "searchPlaceholder": "Tìm từ vựng...",
+    "emptyTitle": "Chưa có từ vựng",
+    "emptyDescription": "Chọn từ hoặc cụm từ khi đang học để lưu vào đây.",
+    "noResultsTitle": "Không có kết quả"
+  }
+}

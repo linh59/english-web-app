@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "library": "Library"
+  },
+  "library": {
+    "title": "Library",
+    "emptyTitle": "No lessons yet",
+    "emptyDescription": "Upload an audio file to create your first lesson.",
+    "deleteTitle": "Delete this lesson?",
+    "deleteDescription": "This action cannot be undone."
+  },
+  "upload": {
+    "trigger": "Upload audio",
+    "title": "Upload a lesson",
+    "description": "Upload an audio file to generate a transcript automatically.",
+    "fileLabel": "Audio file",
+    "titleLabel": "Title",
+    "submit": "Upload",
+    "fileTooLarge": "This file is larger than 50MB. Please compress it (e.g. lower bitrate, mono) before uploading."
+  },
+  "study": {
+    "processing": "This lesson is still being processed. Keep this tab open — check back in a few minutes for long audio."
+  }
+}
