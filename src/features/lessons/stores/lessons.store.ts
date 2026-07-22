@@ -2,14 +2,24 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
+import type { CompressionProgressCallback } from '@/shared/lib/audio-compression'
+import { compressAudioFile } from '@/shared/lib/audio-compression'
 import { chunkAudioFile } from '@/shared/lib/audio-chunking'
 import type { LessonRow, LessonSentenceRow } from '@/shared/lib/database.types'
 import { supabase } from '@/shared/lib/supabase'
 import type { Lesson, LessonSentence } from '../types'
 
-// Supabase Storage free-tier file size limit. Kept here (not just as a
-// Storage-side error) so the upload dialog can validate before even trying.
+// Supabase Storage free-tier file size limit. Every upload is compressed
+// (see audio-compression.ts) before hitting Storage, so this now gates the
+// COMPRESSED output, not the original file the user picked.
 export const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024
+
+// Sanity ceiling on the RAW file the user selects, before any compression is
+// attempted — protects the browser tab from choking on a pathological input
+// (ffmpeg.wasm loads the whole file into WASM memory). Generous on purpose:
+// real audiobooks up to several hundred MB are the expected case now that
+// compression is automatic, not something to block upfront like before.
+export const MAX_RAW_UPLOAD_SIZE_BYTES = 1024 * 1024 * 1024
 
 // Each chunk is transcribed by its own Edge Function call, so it must finish
 // well within the platform's execution time limit. 6 minutes of 16kHz mono
@@ -51,13 +61,13 @@ async function toDetailedError(error: unknown): Promise<Error> {
   return error instanceof Error ? error : new Error(String(error))
 }
 
-async function invokeTranscribeChunkWithRetry(blob: Blob): Promise<{ sentences: RawSentence[] }> {
+async function invokeTranscribeChunkWithRetry(blob: Blob, mimeType: string): Promise<{ sentences: RawSentence[] }> {
   let lastError: Error = new Error('Unknown error')
 
   for (let attempt = 0; attempt < CHUNK_MAX_ATTEMPTS; attempt++) {
     const { data, error } = await supabase.functions.invoke('transcribe-chunk', {
       body: blob,
-      headers: { 'Content-Type': 'audio/wav' },
+      headers: { 'Content-Type': mimeType },
       timeout: CHUNK_INVOKE_TIMEOUT_MS,
     })
     if (!error) return data
@@ -156,7 +166,7 @@ export const useLessonsStore = defineStore('lessons', () => {
 
         if (completedChunkIndices.has(i)) continue
 
-        const data = await invokeTranscribeChunkWithRetry(chunks[i].blob)
+        const data = await invokeTranscribeChunkWithRetry(chunks[i].blob, chunks[i].mimeType)
         const sentences = (data.sentences as RawSentence[]).map((sentence) => ({
           text: sentence.text,
           startTime: sentence.startTime + chunks[i].startTime,
@@ -195,18 +205,29 @@ export const useLessonsStore = defineStore('lessons', () => {
     }
   }
 
-  async function uploadLesson(file: File, title: string) {
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+  async function uploadLesson(file: File, title: string, onCompressionProgress?: CompressionProgressCallback) {
+    if (file.size > MAX_RAW_UPLOAD_SIZE_BYTES) {
       throw new Error('FILE_TOO_LARGE')
+    }
+
+    // Compress before it ever touches Storage — see audio-compression.ts for
+    // why (ffmpeg.wasm, mono, duration-adaptive low bitrate). The compressed
+    // file (not the original) is what gets stored AND what gets chunked for
+    // transcription, so playback/retry/transcription all reference the same
+    // bytes.
+    const compressedFile = await compressAudioFile(file, onCompressionProgress)
+    if (compressedFile.size > MAX_UPLOAD_SIZE_BYTES) {
+      throw new Error('FILE_TOO_LARGE_AFTER_COMPRESSION')
     }
 
     const authStore = useAuthStore()
     const userId = authStore.user!.id
     const id = crypto.randomUUID()
-    const extension = file.name.split('.').pop()
-    const audioPath = `${userId}/${id}.${extension}`
+    const audioPath = `${userId}/${id}.m4a`
 
-    const { error: uploadError } = await supabase.storage.from('audio').upload(audioPath, file)
+    // storage-js reads the Content-Type for a Blob/File body from the blob's
+    // own .type (set in compressAudioFile), not from an options field here.
+    const { error: uploadError } = await supabase.storage.from('audio').upload(audioPath, compressedFile)
     if (uploadError) throw uploadError
 
     const { data, error: insertError } = await supabase
@@ -224,7 +245,7 @@ export const useLessonsStore = defineStore('lessons', () => {
     // shot — see supabase/functions/transcribe-chunk for why. It keeps running
     // as long as this tab stays open; closing it mid-upload leaves the lesson
     // stuck at "processing" (a known V1 limitation, documented in CLAUDE.md).
-    processLessonAudio(id, file)
+    processLessonAudio(id, compressedFile)
   }
 
   // Re-runs processing for a failed lesson, downloading the original audio

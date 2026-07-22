@@ -12,4 +12,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    // @ffmpeg/ffmpeg spawns its worker via `new URL('./worker.js', import.meta.url)`;
+    // esbuild pre-bundling breaks that path resolution unless these are excluded.
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+  },
 })

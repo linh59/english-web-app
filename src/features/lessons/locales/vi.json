@@ -7,16 +7,21 @@
     "emptyTitle": "Chưa có bài học nào",
     "emptyDescription": "Upload file audio để tạo bài học đầu tiên.",
     "deleteTitle": "Xóa bài học này?",
-    "deleteDescription": "Hành động này không thể hoàn tác."
+    "deleteDescription": "Hành động này không thể hoàn tác.",
+    "processingChunk": "Đoạn {current}/{total}"
   },
   "upload": {
     "trigger": "Upload audio",
     "title": "Upload bài học",
-    "description": "Upload file audio để tự động sinh transcript.",
+    "description": "Upload file audio để tự động sinh transcript. File sẽ tự động được nén — không cần nén tay trước.",
     "fileLabel": "File audio",
     "titleLabel": "Tiêu đề",
     "submit": "Upload",
-    "fileTooLarge": "File này lớn hơn 50MB. Hãy nén lại (giảm bitrate, chuyển mono) trước khi upload."
+    "fileTooLarge": "File này quá lớn để xử lý (trên 1GB).",
+    "fileTooLargeAfterCompression": "Audio này quá dài, vẫn vượt giới hạn dù đã nén tự động. Hãy thử chia nhỏ file trước khi upload.",
+    "compressionFailed": "Không thể nén file audio này. File có thể bị hỏng hoặc định dạng không được hỗ trợ.",
+    "preparingCompression": "Đang chuẩn bị bộ nén…",
+    "compressing": "Đang nén audio…"
   },
   "study": {
     "processing": "Bài học đang được xử lý. Giữ tab này mở — quay lại kiểm tra sau vài phút với audio dài."

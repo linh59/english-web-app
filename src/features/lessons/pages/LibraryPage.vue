@@ -64,6 +64,7 @@ async function confirmDelete() {
         :title="lesson.title"
         :duration-seconds="lesson.durationSeconds ?? 0"
         :status="lesson.status"
+        :processing-step="lesson.processingStep"
         @open="openLesson(lesson.id)"
         @delete="pendingDeleteId = lesson.id"
         @retry="lessonsStore.retryLesson(lesson.id)"

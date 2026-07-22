@@ -7,16 +7,21 @@
     "emptyTitle": "No lessons yet",
     "emptyDescription": "Upload an audio file to create your first lesson.",
     "deleteTitle": "Delete this lesson?",
-    "deleteDescription": "This action cannot be undone."
+    "deleteDescription": "This action cannot be undone.",
+    "processingChunk": "Chunk {current}/{total}"
   },
   "upload": {
     "trigger": "Upload audio",
     "title": "Upload a lesson",
-    "description": "Upload an audio file to generate a transcript automatically.",
+    "description": "Upload an audio file to generate a transcript automatically. It's compressed automatically — no need to shrink it yourself first.",
     "fileLabel": "Audio file",
     "titleLabel": "Title",
     "submit": "Upload",
-    "fileTooLarge": "This file is larger than 50MB. Please compress it (e.g. lower bitrate, mono) before uploading."
+    "fileTooLarge": "This file is too large to process (over 1GB).",
+    "fileTooLargeAfterCompression": "This audio is too long to fit even after automatic compression. Try splitting it into shorter parts.",
+    "compressionFailed": "Couldn't compress this audio file. It may be corrupted or in an unsupported format.",
+    "preparingCompression": "Preparing compressor…",
+    "compressing": "Compressing audio…"
   },
   "study": {
     "processing": "This lesson is still being processed. Keep this tab open — check back in a few minutes for long audio."

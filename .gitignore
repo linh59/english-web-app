@@ -13,8 +13,11 @@ dist-ssr
 *.local
 .env
 
-# Test audio fixtures (copyrighted audiobook content, large binaries)
-assets/audio/
+# # Test audio fixtures (copyrighted audiobook content, large binaries)
+# assets/audio/
+
+# ffmpeg.wasm core (self-hosted, copied from node_modules by "postinstall")
+public/ffmpeg/
 
 # Editor directories and files
 .vscode/*

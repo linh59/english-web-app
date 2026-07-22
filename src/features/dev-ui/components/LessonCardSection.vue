@@ -2,9 +2,9 @@
 import LessonCard from '@/shared/components/LessonCard/LessonCard.vue'
 import type { LessonStatus } from '@/shared/components/LessonCard/LessonCard.vue'
 
-const LESSONS: { title: string, durationSeconds: number, status: LessonStatus }[] = [
+const LESSONS: { title: string, durationSeconds: number, status: LessonStatus, processingStep?: string }[] = [
   { title: 'Everyday Conversations — Episode 12', durationSeconds: 4260, status: 'done' },
-  { title: 'BBC Podcast — Climate Change', durationSeconds: 3600, status: 'processing' },
+  { title: 'BBC Podcast — Climate Change', durationSeconds: 3600, status: 'processing', processingStep: 'chunk 5/12' },
   { title: 'TED Talk — The Power of Vulnerability', durationSeconds: 1180, status: 'pending' },
   { title: 'News in Slow English — Jul 21', durationSeconds: 900, status: 'failed' },
 ]
@@ -18,6 +18,7 @@ const LESSONS: { title: string, durationSeconds: number, status: LessonStatus }[
       :title="lesson.title"
       :duration-seconds="lesson.durationSeconds"
       :status="lesson.status"
+      :processing-step="lesson.processingStep"
     />
   </div>
 </template>
