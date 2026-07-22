@@ -25,7 +25,7 @@ async function handleLogout() {
     <Navbar app-name="English App" :links="links" @logout="handleLogout" />
     <main>
       <RouterView />
-      hello
+      
     </main>
   </div>
 </template>
