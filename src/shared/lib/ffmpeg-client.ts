@@ -12,6 +12,14 @@ import { toBlobURL } from '@ffmpeg/util'
 
 const CORE_BASE_URL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm'
 
+// Signals only "loading has started" (0), not a byte-level percentage.
+// @ffmpeg/util's toBlobURL(..., progress: true) tracks percentage by
+// comparing the `content-length` header against bytes actually read — but
+// jsDelivr serves ffmpeg-core.js brotli-compressed with `content-length` set
+// to the *compressed* size while fetch() transparently decompresses it, so
+// received bytes never match and it throws (then crashes harder trying to
+// re-read the already-consumed response body as a fallback). No CDN-safe way
+// to get a real percentage here, so we don't fake one.
 export type FfmpegLoadProgressCallback = (progress: number) => void
 
 let ffmpegInstance: FFmpeg | null = null
@@ -22,10 +30,9 @@ export function loadFfmpeg(onProgress?: FfmpegLoadProgressCallback): Promise<FFm
   if (loadPromise) return loadPromise
 
   loadPromise = (async () => {
+    onProgress?.(0)
     const ffmpeg = new FFmpeg()
-    const coreURL = await toBlobURL(`${CORE_BASE_URL}/ffmpeg-core.js`, 'text/javascript', true, (event) => {
-      if (event.total > 0) onProgress?.(event.received / event.total)
-    })
+    const coreURL = await toBlobURL(`${CORE_BASE_URL}/ffmpeg-core.js`, 'text/javascript')
     const wasmURL = await toBlobURL(`${CORE_BASE_URL}/ffmpeg-core.wasm`, 'application/wasm')
     await ffmpeg.load({ coreURL, wasmURL })
     ffmpegInstance = ffmpeg
