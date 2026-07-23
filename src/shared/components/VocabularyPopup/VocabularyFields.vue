@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { VocabularyCefrLevel, VocabularyWordType } from '@/features/vocabulary/types'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { CEFR_CLASS, WORD_TYPE_CLASS } from '@/features/vocabulary/lib/wordTypeStyle'
 import { Badge } from '@/shared/components/ui/badge'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Switch } from '@/shared/components/ui/switch'
@@ -79,8 +81,12 @@ const wordTypeLabel = computed(() => {
 
     <template v-else>
       <div v-if="wordTypeLabel || cefrLevel" class="mt-2 flex flex-wrap gap-1">
-        <Badge v-if="wordTypeLabel" variant="secondary">{{ wordTypeLabel }}</Badge>
-        <Badge v-if="cefrLevel" variant="outline">{{ cefrLevel }}</Badge>
+        <Badge v-if="wordTypeLabel" :class="WORD_TYPE_CLASS[wordType as VocabularyWordType]">
+          {{ wordTypeLabel }}
+        </Badge>
+        <Badge v-if="cefrLevel" :class="CEFR_CLASS[cefrLevel as VocabularyCefrLevel]">
+          {{ cefrLevel }}
+        </Badge>
       </div>
 
       <label class="mt-2 block text-xs font-medium text-muted-foreground">

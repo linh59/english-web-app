@@ -4,8 +4,8 @@
   "noResults": "No components match your search.",
   "toggleSidebar": "Toggle navigation",
   "sections": {
-    "colors": { "title": "Colors", "description": "Semantic color tokens for background, text, border and state." },
-    "typography": { "title": "Typography", "description": "Type scale used across the app." },
+    "colors": { "title": "Colors", "description": "Semantic color tokens for background, text, border, state, and vocabulary category/CEFR coding." },
+    "typography": { "title": "Typography", "description": "Type scale used across the app — Inter for body, Lexend for headings." },
     "tokens": { "title": "Spacing, Radius & Motion", "description": "Shared scales for spacing, radius, shadow, icon size, easing and z-index." },
     "buttons": { "title": "Buttons", "description": "Variants, sizes and states." },
     "inputs": { "title": "Inputs", "description": "Text, password, search and textarea fields." },

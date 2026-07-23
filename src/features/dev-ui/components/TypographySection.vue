@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const SPECIMENS = [
   { name: 'Display', class: 'text-4xl font-bold tracking-tight' },
-  { name: 'Heading', class: 'text-2xl font-semibold tracking-tight' },
+  { name: 'Heading', class: 'text-2xl font-semibold tracking-tight font-heading' },
   { name: 'Title', class: 'text-xl font-semibold' },
   { name: 'Subtitle', class: 'text-lg font-medium' },
   { name: 'Body', class: 'text-sm font-normal' },
@@ -20,6 +20,14 @@ const SPECIMENS = [
     <div class="flex items-baseline gap-4">
       <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">Code</span>
       <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">const hello = "world"</code>
+    </div>
+    <div class="flex items-baseline gap-4 border-t border-border pt-3">
+      <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">font-sans</span>
+      <span class="font-sans text-lg text-foreground">Inter — body text (0-9 aeg)</span>
+    </div>
+    <div class="flex items-baseline gap-4">
+      <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">font-heading</span>
+      <span class="font-heading text-lg font-semibold text-foreground">Lexend — headings & vocabulary word (0-9 aeg)</span>
     </div>
   </div>
 </template>

@@ -4,7 +4,11 @@ Nền tảng UI dùng chung cho English App. Xem trực quan tại `/ui` (chỉ 
 
 ## Triết lý thiết kế
 
-Tối giản, nhiều khoảng trắng, typography rõ ràng, màu dịu mắt, shadow nhẹ, bo góc mềm, animation tiết chế — lấy cảm hứng từ Apple, Linear, Raycast, Notion, Vercel, Stripe Dashboard. Component chỉ được thêm vào khi có màn hình thật trong V1 cần dùng (xem phần "Phạm vi" bên dưới) — không xây trước cho tính năng chưa tồn tại.
+Tối giản, nhiều khoảng trắng, typography rõ ràng, shadow nhẹ, bo góc mềm, animation tiết chế — lấy cảm hứng từ Apple, Linear, Raycast, Notion, Vercel, Stripe Dashboard. Component chỉ được thêm vào khi có màn hình thật trong V1 cần dùng (xem phần "Phạm vi" bên dưới) — không xây trước cho tính năng chưa tồn tại.
+
+> ⚠️ **Đang thử nghiệm (branch `design/multi-hue-experiment`)**: hệ màu đã đổi từ
+> monochrome thuần sang "Semantic Multi-hue" (primary có hue teal + color-coding riêng cho
+> vocabulary) — xem [[decisions]] để biết lý do và cách revert nếu không phù hợp.
 
 ## Stack
 
@@ -14,8 +18,10 @@ Vue 3 (Composition API + `<script setup>`), TypeScript, Vite, TailwindCSS v4, sh
 
 Định nghĩa tại `src/shared/styles/tokens.css`, theo cơ chế CSS variables của Tailwind v4 (`@theme inline`), tự động đổi giá trị giữa light/dark qua class `.dark` trên `<html>`.
 
-- **Color**: `--background`, `--foreground`, `--card`, `--popover`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, cùng 3 token bổ sung ngoài mặc định shadcn: `--success`, `--warning`, `--info` (mỗi token có biến thể `-foreground` để đặt màu chữ tương phản).
+- **Color**: `--background`, `--foreground`, `--card`, `--popover`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, cùng 3 token bổ sung ngoài mặc định shadcn: `--success`, `--warning`, `--info` (mỗi token có biến thể `-foreground` để đặt màu chữ tương phản). `--primary`/`--accent`/`--ring` hiện dùng hue teal (H190, xem [[decisions]]) — `--secondary`/`--muted` vẫn giữ trung tính để làm nền canvas cho badge màu nổi bật.
+- **Token đặc thù Vocabulary** (không dùng chung như success/warning/info ở trên): `--word-single-word`, `--word-phrasal-verb`, `--word-collocation`, `--word-idiom`, `--word-phrase` (category color-coding theo `wordType`, dạng tint `bg-word-x/10 text-word-x`) và `--cefr-a1`...`--cefr-c2` + `-foreground` tương ứng (thang màu sequential theo độ khó, cùng hue với primary). Map enum DB → class Tailwind nằm ở `src/features/vocabulary/lib/wordTypeStyle.ts` — nơi duy nhất cần sửa nếu đổi màu.
 - **Radius**: `--radius` gốc (0.625rem), suy ra `radius-sm/md/lg/xl` qua `calc()`.
+- **Font**: `--font-sans` (Inter) cho body/UI, `--font-heading` (Lexend) cho heading và từ vựng chính trong `VocabularyCard` — dùng class `font-heading` (không phải `cn-font-heading`, đó là bug cũ đã fix).
 - **Shadow, Spacing, Icon size**: dùng thẳng thang mặc định của Tailwind — không tự chế thang riêng, tránh phá vỡ tính nhất quán với hệ sinh thái Tailwind.
 - **Animation/Transition**: 1 easing tùy chỉnh `ease-smooth` (`cubic-bezier(0.4, 0, 0.2, 1)`), còn lại dùng `duration-*` mặc định của Tailwind.
 - **Z-index**: thang riêng cho các lớp nổi — `z-dropdown` (1000), `z-popover` (1100), `z-modal` (1200), `z-toast` (1300).
@@ -30,7 +36,8 @@ Button, Input, Textarea, Switch, Label, Badge, Alert, Card, Dialog, Dropdown Men
 ### Đặc thù English App (tại `src/shared/components/`)
 - `AudioPlayer` — play/pause, seek (single progress bar), playback speed (`PlaybackSpeedControl`), lặp lại (`LoopButton`).
 - `Transcript` + `TranscriptSentence` — danh sách câu, click câu để tua; bôi đen từ/cụm từ để mở `SelectedTextToolbar` → `VocabularyPopup` (lưu từ + nghĩa + câu ví dụ).
-- `LessonCard`, `VocabularyCard` — dựng trên Card cơ bản.
+- `LessonCard` — dựng trên Card cơ bản.
+- `VocabularyCard` — mặt trước chỉ hiện từ + badge màu (`wordType`/`cefrLevel`), click/tap để lật xem definition/meaning/example (xem [[decisions]]).
 - `EmptyState`, `Progress`, `Spinner` — dùng chung nhiều nơi.
 - `Navbar` (kèm `ThemeToggle`, `LocaleSwitcher`) — nav thật của app, nhận `links` qua prop.
 

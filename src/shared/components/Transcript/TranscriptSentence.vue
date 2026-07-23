@@ -16,10 +16,10 @@ defineEmits<{
   <div
     :data-sentence-id="sentenceId"
     :aria-current="isActive ? 'true' : undefined"
-    class="cursor-pointer rounded-md border-l-2 py-1.5 pl-3 pr-2 transition-colors duration-150"
+    class="cursor-pointer rounded-md border-l-2 py-1.5 pl-3 pr-2 transition-all duration-200 ease-smooth"
     :class="
       isActive
-        ? 'border-primary bg-primary/5'
+        ? 'border-l-[3px] border-primary bg-primary/10'
         : 'border-transparent hover:bg-muted'
     "
     @click="$emit('click')"

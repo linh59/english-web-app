@@ -4,8 +4,8 @@
   "noResults": "Không tìm thấy component phù hợp.",
   "toggleSidebar": "Ẩn/hiện điều hướng",
   "sections": {
-    "colors": { "title": "Màu sắc", "description": "Token màu cho nền, chữ, viền và trạng thái." },
-    "typography": { "title": "Typography", "description": "Thang chữ dùng trong toàn bộ ứng dụng." },
+    "colors": { "title": "Màu sắc", "description": "Token màu cho nền, chữ, viền, trạng thái, và color-coding loại từ/CEFR." },
+    "typography": { "title": "Typography", "description": "Thang chữ dùng trong toàn bộ ứng dụng — Inter cho nội dung, Lexend cho heading." },
     "tokens": { "title": "Spacing, Radius & Motion", "description": "Thang dùng chung cho spacing, bo góc, shadow, icon, easing và z-index." },
     "buttons": { "title": "Button", "description": "Variant, kích thước và trạng thái." },
     "inputs": { "title": "Input", "description": "Text, password, search và textarea." },

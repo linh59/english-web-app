@@ -30,6 +30,26 @@ description: Log các quyết định kiến trúc/kỹ thuật quan trọng và
   nền không đủ nổi bật giữa transcript dài hàng giờ — quyết định sau một vòng review
   UI/UX riêng (tham chiếu Kindle/Speechify/ELSA Speak), đã verify bằng ảnh chụp thật cả
   light/dark mode.
+- **Đổi hệ màu từ monochrome sang Semantic Multi-hue (thử nghiệm, branch
+  `design/multi-hue-experiment`)**: quyết định monochrome ở trên ("UI transcript: dim câu
+  không active...") được đưa ra khi app chưa có nhu cầu phân loại từ vựng trực quan. Sau
+  khi người dùng phản hồi thực tế `VocabularyCard` "nhìn sơ toàn chữ, không rõ từ cần học"
+  và muốn UI thú vị/kích thích học hơn, đã chuyển sang color-code theo `wordType` (5 hue
+  tím-hồng, H265-352) và `cefrLevel` (thang màu 6 mức sequential, cùng hue với primary
+  H190) — áp dụng cho toàn app kể cả Transcript (câu active dùng `--primary` H190 teal thay
+  vì chỉ border-trái xám). Cố tình **không** thêm mastery-level/tracking (khác flashcard/
+  SRS, "chưa làm trong V1") — chỉ dùng 2 field đã có sẵn từ `lookup-word-meaning`, không
+  cần migration DB mới. `VocabularyCard` đổi từ hiển thị đầy đủ ngay sang flip-card
+  click-to-reveal (mặt trước chỉ word + badge màu, click mới lật xem definition/meaning/
+  example) — đánh đổi "quét nhanh nhiều thẻ" lấy "từ cần học nổi bật rõ hơn", theo yêu cầu
+  rõ ràng của người dùng. Nhân tiện phát hiện + fix 2 bug có sẵn từ trước (không liên quan
+  trực tiếp tới đổi màu nhưng chặn font mới hoạt động đúng): `--font-sans` chưa từng được
+  định nghĩa trong `tokens.css` (Inter tải về nhưng không áp dụng), và class `cn-font-heading`
+  ở 4 file `*Title.vue` là typo (đúng ra `font-heading`) nên không file nào từng thực sự đổi
+  heading font.
+  ⚠️ Đây là thử nghiệm có thể revert: không xây runtime theme-toggle (over-engineering
+  không cần thiết ở giai đoạn này) — nếu không phù hợp, revert bằng cách không merge/xoá
+  branch `design/multi-hue-experiment`, quay lại giá trị monochrome gốc.
 - **Auto-scroll giữ câu active ở ~35% chiều cao viewport (không phải chính giữa)**:
   người học cần thấy câu sắp tới nhiều hơn câu đã qua (nghe trước, đọc theo), giống
   pattern caption karaoke-style của Speechify.

@@ -13,7 +13,9 @@
     "listenAgain": "Nghe lại đúng ngữ cảnh",
     "encounterCount": "Đã gặp {count} lần",
     "editTitle": "Sửa từ vựng",
-    "deleteTitle": "Xóa từ này?"
+    "deleteTitle": "Xóa từ này?",
+    "showMeaning": "Nhấn để xem nghĩa",
+    "hideMeaning": "Nhấn để ẩn nghĩa"
   },
   "popup": {
     "definitionEn": "Định nghĩa (Tiếng Anh)",

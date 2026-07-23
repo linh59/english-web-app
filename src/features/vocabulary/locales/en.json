@@ -13,7 +13,9 @@
     "listenAgain": "Listen again in context",
     "encounterCount": "Seen {count} times",
     "editTitle": "Edit vocabulary",
-    "deleteTitle": "Delete this word?"
+    "deleteTitle": "Delete this word?",
+    "showMeaning": "Tap to reveal meaning",
+    "hideMeaning": "Tap to hide meaning"
   },
   "popup": {
     "definitionEn": "Definition (English)",

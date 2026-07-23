@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import type { VocabularyCefrLevel, VocabularyWordType } from '@/features/vocabulary/types'
 import VocabularyCard from '@/shared/components/VocabularyCard/VocabularyCard.vue'
 
-const ITEMS = [
+const ITEMS: Array<{
+  word: string
+  meaning: string
+  definitionEn: string
+  exampleSentence: string
+  encounterCount: number
+  wordType: VocabularyWordType
+  cefrLevel: VocabularyCefrLevel
+}> = [
   {
     word: 'nevertheless',
     meaning: 'dù vậy, tuy nhiên',
