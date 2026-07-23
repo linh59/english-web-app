@@ -27,5 +27,8 @@
     "idiom": "Idiom",
     "collocation": "Collocation",
     "phrase": "Phrase"
+  },
+  "toast": {
+    "saved": "Saved \"{word}\" to vocabulary"
   }
 }

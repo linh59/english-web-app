@@ -27,6 +27,9 @@
     "play": "Phát",
     "pause": "Tạm dừng"
   },
+  "nav": {
+    "menu": "Điều hướng"
+  },
   "transcript": {
     "sentenceCounter": "Câu {current}/{total}",
     "sentenceCountTotal": "{total} câu",
