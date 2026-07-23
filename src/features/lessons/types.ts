@@ -9,6 +9,7 @@ export interface Lesson {
   errorMessage: string | null
   processingStep: string | null
   translationStatus: TranslationStatus
+  lastPositionSeconds: number | null
   createdAt: string
 }
 

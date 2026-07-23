@@ -25,7 +25,8 @@
   },
   "audioPlayer": {
     "play": "Phát",
-    "pause": "Tạm dừng"
+    "pause": "Tạm dừng",
+    "backToLibrary": "Về thư viện"
   },
   "transcript": {
     "sentenceCounter": "Câu {current}/{total}",

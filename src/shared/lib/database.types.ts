@@ -10,6 +10,7 @@ export interface LessonRow {
   error_message: string | null
   processing_step: string | null
   translation_status: TranslationStatus
+  last_position_seconds: number | null
   created_at: string
 }
 

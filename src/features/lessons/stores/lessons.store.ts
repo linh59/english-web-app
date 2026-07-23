@@ -120,6 +120,7 @@ function mapLesson(row: LessonRow): Lesson {
     errorMessage: row.error_message,
     processingStep: row.processing_step,
     translationStatus: row.translation_status,
+    lastPositionSeconds: row.last_position_seconds,
     createdAt: row.created_at,
   }
 }
@@ -166,6 +167,14 @@ export const useLessonsStore = defineStore('lessons', () => {
   // writes, so this only needs to touch the database.
   async function updateLessonRow(id: string, patch: Partial<LessonRow>) {
     await supabase.from('lessons').update(patch).eq('id', id)
+  }
+
+  // Called on a playback-position heartbeat + on every point the study page
+  // detects the user might be about to leave (pause, tab hidden, unmount) —
+  // see LessonStudyPage.vue. Best-effort: not awaited by callers that fire it
+  // from unload-adjacent listeners, since blocking there isn't possible anyway.
+  async function updateLastPosition(id: string, seconds: number) {
+    await updateLessonRow(id, { last_position_seconds: Math.round(seconds) })
   }
 
   // Chunk indices that already have sentences saved for this lesson — from a
@@ -479,5 +488,6 @@ export const useLessonsStore = defineStore('lessons', () => {
     getAudioSignedUrl,
     translateLesson,
     fetchTranslationProgress,
+    updateLastPosition,
   }
 })

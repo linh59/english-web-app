@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { Languages, LocateFixed } from '@lucide/vue'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useVocabularyStore } from '@/features/vocabulary/stores/vocabulary.store'
-import AudioPlayer from '@/shared/components/AudioPlayer/AudioPlayer.vue'
 import Transcript from '@/shared/components/Transcript/Transcript.vue'
 import type { VocabularySaveInput } from '@/shared/components/Transcript/types'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Switch } from '@/shared/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
+import LessonPlayerBar from '../components/LessonPlayerBar.vue'
+import { useAutoFollowScroll } from '../composables/useAutoFollowScroll'
 import { useLessonsStore } from '../stores/lessons.store'
 import type { Lesson, LessonSentence } from '../types'
 
@@ -23,23 +24,36 @@ const vocabularyStore = useVocabularyStore()
 // Set when arriving from VocabularyCard's "listen again" button
 // (?t=<seconds>) — seeks to that exact moment once the audio's metadata has
 // loaded (seeking any earlier can silently no-op before duration is known).
+// Takes priority over the resume position below (a deliberate jump beats a
+// passive "where you left off").
 const pendingSeekTime = computed(() => {
   const value = Number(route.query.t)
   return Number.isFinite(value) ? value : null
 })
+
+// Below this, resuming isn't worth a jump — the learner is basically at the
+// very start of the lesson anyway.
+const MIN_RESUME_SECONDS = 3
+
 function handleAudioReady() {
-  if (pendingSeekTime.value !== null) audioPlayerRef.value?.seekTo(pendingSeekTime.value)
+  if (pendingSeekTime.value !== null) {
+    playerBarRef.value?.seekTo(pendingSeekTime.value)
+    return
+  }
+  const savedPosition = lesson.value?.lastPositionSeconds
+  if (savedPosition && savedPosition > MIN_RESUME_SECONDS) {
+    playerBarRef.value?.seekTo(savedPosition)
+  }
 }
 
 const lesson = ref<Lesson | null>(null)
 const sentences = ref<LessonSentence[]>([])
 const audioUrl = ref('')
 const loading = ref(true)
-const audioPlayerRef = ref<InstanceType<typeof AudioPlayer>>()
-const stickyRef = ref<HTMLElement>()
-const stickyHeight = ref(0)
+const playerBarRef = ref<InstanceType<typeof LessonPlayerBar>>()
+const isPlaying = ref(false)
+const bottomBarHeight = ref(0)
 const currentTime = ref(0)
-const autoFollow = ref(true)
 
 // Defaults to ON (learners see the translation right away); persisted the same
 // way as theme/locale (see useTheme.ts, i18n.ts) so the choice survives reloads.
@@ -49,9 +63,6 @@ function setShowTranslation(value: boolean) {
   showTranslation.value = value
   localStorage.setItem(SHOW_TRANSLATION_STORAGE_KEY, String(value))
 }
-
-let isProgrammaticScroll = false
-let programmaticScrollTimer: number | undefined
 
 const activeSentenceId = computed(
   () => sentences.value.find((s) => currentTime.value >= s.startTime && currentTime.value < s.endTime)?.id,
@@ -63,6 +74,26 @@ const counterText = computed(() =>
     : t('common.transcript.sentenceCountTotal', { total: sentences.value.length }),
 )
 
+const stickyRef = ref<HTMLElement>()
+const { autoFollow, jumpToActive } = useAutoFollowScroll(activeSentenceId, stickyRef)
+
+// --- Playback position persistence ----------------------------------------
+// No single event reliably fires when a learner "leaves": they might navigate
+// away in-app (unmount), pause, background the tab / lock the screen
+// (visibilitychange), or close the tab outright (pagehide). Flush on all of
+// them — the interval below is only a background safety net while playing,
+// since most real exits happen through one of the explicit triggers instead.
+let positionFlushInterval: number | undefined
+
+function flushPosition() {
+  if (!lesson.value || currentTime.value <= 0) return
+  lessonsStore.updateLastPosition(lesson.value.id, currentTime.value)
+}
+
+function onVisibilityChange() {
+  if (document.visibilityState === 'hidden') flushPosition()
+}
+
 onMounted(async () => {
   loading.value = true
   lesson.value = await lessonsStore.fetchLessonById(props.id)
@@ -71,49 +102,6 @@ onMounted(async () => {
   }
   audioUrl.value = await lessonsStore.getAudioSignedUrl(lesson.value.audioPath)
   loading.value = false
-})
-
-function measureSticky() {
-  stickyHeight.value = stickyRef.value?.getBoundingClientRect().height ?? 0
-}
-
-function scrollToSentence(id: string) {
-  const el = document.querySelector<HTMLElement>(`[data-sentence-id="${id}"]`)
-  if (!el) return
-
-  const rect = el.getBoundingClientRect()
-  const viewportHeight = window.innerHeight - stickyHeight.value
-  const targetY = stickyHeight.value + viewportHeight * 0.35
-  const delta = rect.top - targetY
-  if (Math.abs(delta) < 4) return
-
-  isProgrammaticScroll = true
-  window.scrollBy({ top: delta, behavior: 'smooth' })
-  window.clearTimeout(programmaticScrollTimer)
-  programmaticScrollTimer = window.setTimeout(() => {
-    isProgrammaticScroll = false
-  }, 600)
-}
-
-function onWindowScroll() {
-  if (isProgrammaticScroll) return
-  autoFollow.value = false
-}
-
-function jumpToActive() {
-  autoFollow.value = true
-  if (activeSentenceId.value) scrollToSentence(activeSentenceId.value)
-}
-
-// The active sentence's own height changes when the translation line
-// appears/disappears under it (previous active sentence loses it, new one
-// gains it), which shifts every element below it right as this scroll math
-// reads getBoundingClientRect() — wait for that layout to settle first so the
-// scroll target isn't computed against stale positions.
-watch(activeSentenceId, async (id) => {
-  if (!id || !autoFollow.value) return
-  await nextTick()
-  scrollToSentence(id)
 })
 
 function isTypingTarget(target: EventTarget | null) {
@@ -127,7 +115,7 @@ function handleKeydown(event: KeyboardEvent) {
 
   if (event.code === 'Space') {
     event.preventDefault()
-    audioPlayerRef.value?.togglePlay()
+    playerBarRef.value?.togglePlay()
     return
   }
 
@@ -141,26 +129,29 @@ function handleKeydown(event: KeyboardEvent) {
         : event.code === 'ArrowRight'
           ? Math.min(sentences.value.length - 1, currentIndex + 1)
           : Math.max(0, currentIndex - 1)
-    audioPlayerRef.value?.seekTo(sentences.value[targetIndex].startTime)
+    playerBarRef.value?.seekTo(sentences.value[targetIndex].startTime)
   }
 }
 
 onMounted(() => {
-  measureSticky()
-  window.addEventListener('resize', measureSticky)
-  window.addEventListener('scroll', onWindowScroll, { passive: true })
   window.addEventListener('keydown', handleKeydown)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('pagehide', flushPosition)
+  positionFlushInterval = window.setInterval(() => {
+    if (isPlaying.value) flushPosition()
+  }, 5000)
 })
 onUnmounted(() => {
-  window.removeEventListener('resize', measureSticky)
-  window.removeEventListener('scroll', onWindowScroll)
   window.removeEventListener('keydown', handleKeydown)
-  window.clearTimeout(programmaticScrollTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('pagehide', flushPosition)
+  window.clearInterval(positionFlushInterval)
+  flushPosition()
 })
 
 function handleSentenceClick(sentenceId: string) {
   const sentence = sentences.value.find((s) => s.id === sentenceId)
-  if (sentence) audioPlayerRef.value?.seekTo(sentence.startTime)
+  if (sentence) playerBarRef.value?.seekTo(sentence.startTime)
 }
 
 function handleSaveVocabulary(payload: VocabularySaveInput) {
@@ -182,56 +173,27 @@ function handleSaveVocabulary(payload: VocabularySaveInput) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
-    <Skeleton v-if="loading" class="h-64 w-full" />
+  <div>
+    <div
+      class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8"
+      :style="lesson ? { paddingBottom: `${bottomBarHeight + 16}px` } : undefined"
+    >
+      <Skeleton v-if="loading" class="h-64 w-full" />
 
-    <template v-else-if="lesson">
-      <h1 class="text-lg font-semibold text-foreground">{{ lesson.title }}</h1>
-
-      <div
-        ref="stickyRef"
-        class="sticky top-0 z-20 -mx-4 space-y-2 bg-background/95 px-4 pb-3 pt-1 backdrop-blur-sm sm:-mx-8 sm:px-8"
-      >
-        <AudioPlayer
-          ref="audioPlayerRef"
-          :src="audioUrl"
-          @timeupdate="currentTime = $event"
-          @loadedmetadata="handleAudioReady"
-        />
+      <template v-else-if="lesson">
+        <h1 class="text-lg font-semibold text-foreground">{{ lesson.title }}</h1>
 
         <div
           v-if="lesson.status === 'done'"
-          class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground"
+          ref="stickyRef"
+          class="sticky top-0 z-20 -mx-4 bg-background/95 px-4 py-2 backdrop-blur-sm sm:-mx-8 sm:px-8"
         >
-          <span class="whitespace-nowrap">{{ counterText }}</span>
+          <div
+            class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground"
+          >
+            <span class="whitespace-nowrap">{{ counterText }}</span>
 
-          <TooltipProvider>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-              <Tooltip v-if="!autoFollow">
-                <TooltipTrigger as-child>
-                  <button
-                    type="button"
-                    class="flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-1 font-medium text-primary hover:bg-muted"
-                    @click="jumpToActive"
-                  >
-                    <LocateFixed class="size-3.5" />
-                    {{ t('common.transcript.backToActive') }}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{{ t('common.transcript.backToActiveHint') }}</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger as-child>
-                  <label class="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
-                    <LocateFixed class="size-3.5" :class="autoFollow ? 'text-primary' : 'text-muted-foreground'" />
-                    <span>{{ t('common.transcript.autoScroll') }}</span>
-                    <Switch size="sm" :model-value="autoFollow" @update:model-value="autoFollow = $event" />
-                  </label>
-                </TooltipTrigger>
-                <TooltipContent>{{ t('common.transcript.autoScrollHint') }}</TooltipContent>
-              </Tooltip>
-
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>
                   <label class="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
@@ -242,22 +204,50 @@ function handleSaveVocabulary(payload: VocabularySaveInput) {
                 </TooltipTrigger>
                 <TooltipContent>{{ t('common.transcript.showTranslationHint') }}</TooltipContent>
               </Tooltip>
-            </div>
-          </TooltipProvider>
+            </TooltipProvider>
+          </div>
         </div>
-      </div>
 
-      <p v-if="lesson.status !== 'done'" class="text-sm text-muted-foreground">
-        {{ t('lessons.study.processing') }}
-      </p>
-      <Transcript
-        v-else
-        :sentences="sentences"
-        :active-sentence-id="activeSentenceId"
-        :show-translation="showTranslation"
-        @sentence-click="handleSentenceClick"
-        @save-vocabulary="handleSaveVocabulary"
-      />
-    </template>
+        <p v-if="lesson.status !== 'done'" class="text-sm text-muted-foreground">
+          {{ t('lessons.study.processing') }}
+        </p>
+        <Transcript
+          v-else
+          :sentences="sentences"
+          :active-sentence-id="activeSentenceId"
+          :show-translation="showTranslation"
+          @sentence-click="handleSentenceClick"
+          @save-vocabulary="handleSaveVocabulary"
+        />
+      </template>
+    </div>
+
+    <TooltipProvider v-if="!autoFollow">
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button
+            type="button"
+            class="fixed right-4 z-30 flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+            :style="{ bottom: `${bottomBarHeight + 16}px` }"
+            :aria-label="t('common.transcript.backToActive')"
+            @click="jumpToActive"
+          >
+            <LocateFixed class="size-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{{ t('common.transcript.backToActiveHint') }}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+
+    <LessonPlayerBar
+      v-if="lesson"
+      ref="playerBarRef"
+      :src="audioUrl"
+      @timeupdate="currentTime = $event"
+      @loadedmetadata="handleAudioReady"
+      @play="isPlaying = true"
+      @pause="isPlaying = false; flushPosition()"
+      @heightchange="bottomBarHeight = $event"
+    />
   </div>
 </template>

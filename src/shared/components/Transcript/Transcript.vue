@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import { onMounted, onUnmounted, ref } from 'vue'
 import VocabularyPopup from '../VocabularyPopup/VocabularyPopup.vue'
 import SelectedTextToolbar from './SelectedTextToolbar.vue'
 import TranscriptSentence from './TranscriptSentence.vue'
 import type { TranscriptSentenceData, VocabularySaveInput } from './types'
+
+// Matches Tailwind's `sm` breakpoint. Below it, selecting text is already a
+// deliberate long-press-and-drag gesture, so the intermediate "Save" toolbar
+// step is skipped — the full popup (rendered as a bottom sheet, see
+// VocabularyPopup.vue) opens directly.
+const isDesktop = useMediaQuery('(min-width: 640px)')
 
 const props = defineProps<{
   sentences: TranscriptSentenceData[]
@@ -58,18 +65,26 @@ function onMouseUp() {
     top: rect.top - containerRect.top,
     left: rect.left - containerRect.left + rect.width / 2,
   }
-  showPopup.value = false
+  // Desktop keeps the 2-step "Save" toolbar → popup flow; mobile opens the
+  // popup directly since selecting text there is already a deliberate action.
+  showPopup.value = !isDesktop.value
 }
 
-function onDocumentMouseDown(event: MouseEvent) {
+function onDocumentPointerDown(event: Event) {
   if (!containerEl.value?.contains(event.target as Node)) {
     selection.value = null
     showPopup.value = false
   }
 }
 
-onMounted(() => document.addEventListener('mousedown', onDocumentMouseDown))
-onUnmounted(() => document.removeEventListener('mousedown', onDocumentMouseDown))
+onMounted(() => {
+  document.addEventListener('mousedown', onDocumentPointerDown)
+  document.addEventListener('touchstart', onDocumentPointerDown)
+})
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onDocumentPointerDown)
+  document.removeEventListener('touchstart', onDocumentPointerDown)
+})
 
 function handleSentenceClick(id: string) {
   // A double-click to select a word also fires a click event on the sentence.
@@ -95,7 +110,7 @@ function cancelPopup() {
 </script>
 
 <template>
-  <div ref="containerEl" class="relative mx-auto max-w-[70ch]" @mouseup="onMouseUp">
+  <div ref="containerEl" class="relative mx-auto max-w-[70ch]" @mouseup="onMouseUp" @touchend="onMouseUp">
     <TranscriptSentence
       v-for="sentence in sentences"
       :key="sentence.id"

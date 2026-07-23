@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVocabularyStore } from '@/features/vocabulary/stores/vocabulary.store'
 import type { VocabularySaveInput } from '@/shared/components/Transcript/types'
 import { Button } from '@/shared/components/ui/button'
 import VocabularyFields from './VocabularyFields.vue'
+
+// Matches Transcript.vue's breakpoint. Below it, this renders as a full-width
+// bottom sheet instead of a small popover pinned to the selection's pixel
+// coordinates — a fixed-width popover anchored that way can overflow narrow
+// phone screens, and its buttons are too small for a comfortable tap target.
+const isDesktop = useMediaQuery('(min-width: 640px)')
 
 const props = defineProps<{
   word: string
@@ -33,6 +40,10 @@ const wordType = ref<string | null>(null)
 const cefrLevel = ref<string | null>(null)
 const synonyms = ref<string[]>([])
 const antonyms = ref<string[]>([])
+
+// Pixel coordinates only make sense for the desktop popover; the mobile
+// bottom sheet is positioned entirely by CSS (fixed to the viewport edge).
+const popoverStyle = computed(() => (isDesktop.value ? { top: `${props.top}px`, left: `${props.left}px` } : {}))
 
 // Auto-fills meaning/definition from the lookup-word-meaning Edge Function
 // (hybrid Gemini + dictionary, see its own comments). Never blocks Save on
@@ -72,11 +83,15 @@ function handleSave() {
 </script>
 
 <template>
+  <div class="fixed inset-0 z-popover bg-black/40 sm:hidden" @click="$emit('cancel')" />
+
   <div
-    class="absolute z-popover w-72 -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg"
-    :style="{ top: `${top}px`, left: `${left}px` }"
+    class="fixed inset-x-0 bottom-0 z-popover max-h-[80vh] overflow-y-auto rounded-t-xl border-t border-border bg-popover p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-popover-foreground shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:w-72 sm:max-h-none sm:-translate-x-1/2 sm:overflow-visible sm:rounded-lg sm:border sm:p-3 sm:pb-3"
+    :style="popoverStyle"
     @mousedown.stop
     @mouseup.stop
+    @touchstart.stop
+    @touchend.stop
   >
     <VocabularyFields
       :word="word"
@@ -93,9 +108,13 @@ function handleSave() {
       @update:meaning="meaning = $event"
       @update:definition-en="definitionEn = $event"
     />
-    <div class="mt-2 flex justify-end gap-2">
-      <Button variant="ghost" size="sm" @click="$emit('cancel')">{{ t('common.cancel') }}</Button>
-      <Button size="sm" @click="handleSave">{{ t('common.save') }}</Button>
+    <div class="mt-3 flex justify-end gap-2 sm:mt-2">
+      <Button variant="ghost" class="h-11 flex-1 text-sm sm:h-6 sm:flex-none sm:text-xs/relaxed" @click="$emit('cancel')">
+        {{ t('common.cancel') }}
+      </Button>
+      <Button class="h-11 flex-1 text-sm sm:h-6 sm:flex-none sm:text-xs/relaxed" @click="handleSave">
+        {{ t('common.save') }}
+      </Button>
     </div>
   </div>
 </template>

@@ -16,6 +16,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   timeupdate: [currentTime: number]
   loadedmetadata: []
+  play: []
+  pause: []
 }>()
 
 const audioEl = ref<HTMLAudioElement>()
@@ -36,10 +38,12 @@ function togglePlay() {
 
 function onPlay() {
   isPlaying.value = true
+  emit('play')
 }
 
 function onPause() {
   isPlaying.value = false
+  emit('pause')
 }
 
 function onTimeUpdate() {

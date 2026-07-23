@@ -25,7 +25,8 @@
   },
   "audioPlayer": {
     "play": "Play",
-    "pause": "Pause"
+    "pause": "Pause",
+    "backToLibrary": "Back to library"
   },
   "transcript": {
     "sentenceCounter": "Sentence {current} of {total}",
