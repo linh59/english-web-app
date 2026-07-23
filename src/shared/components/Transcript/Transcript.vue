@@ -36,34 +36,16 @@ function findSentenceId(node: Node | null): string | undefined {
   return el instanceof HTMLElement ? el.dataset.sentenceId : undefined
 }
 
-// selectionchange (rather than mouseup) is what actually detects a finished
-// selection on both desktop (mouse drag) and mobile (dragging iOS/Android's
-// native selection handles) — mobile touch selection doesn't reliably fire a
-// synthetic mouseup on the element the way desktop click-drag does, which is
-// why the Save toolbar never appeared on iPhone before this. Debounced so the
-// toolbar only (re)computes once the selection has settled, not on every
-// intermediate change while still dragging.
-const SELECTION_SETTLE_MS = 200
-let selectionChangeTimer: number | undefined
-
-function computeSelectionState() {
+function onMouseUp() {
   const sel = window.getSelection()
   const text = sel?.toString().trim()
-  if (!sel || !text || sel.rangeCount === 0 || sel.isCollapsed) {
-    selection.value = null
-    showPopup.value = false
+  if (!sel || !text || sel.rangeCount === 0) {
     return
   }
 
   const range = sel.getRangeAt(0)
-  if (!containerEl.value?.contains(range.commonAncestorContainer)) {
-    selection.value = null
-    showPopup.value = false
-    return
-  }
-
   const rect = range.getBoundingClientRect()
-  const containerRect = containerEl.value.getBoundingClientRect()
+  const containerRect = containerEl.value!.getBoundingClientRect()
   const sentenceId = findSentenceId(range.startContainer)
   const sentence = props.sentences.find((s) => s.id === sentenceId)
 
@@ -79,29 +61,15 @@ function computeSelectionState() {
   showPopup.value = false
 }
 
-function onSelectionChange() {
-  window.clearTimeout(selectionChangeTimer)
-  selectionChangeTimer = window.setTimeout(computeSelectionState, SELECTION_SETTLE_MS)
-}
-
-function onDocumentPointerDown(event: MouseEvent | TouchEvent) {
+function onDocumentMouseDown(event: MouseEvent) {
   if (!containerEl.value?.contains(event.target as Node)) {
     selection.value = null
     showPopup.value = false
   }
 }
 
-onMounted(() => {
-  document.addEventListener('selectionchange', onSelectionChange)
-  document.addEventListener('mousedown', onDocumentPointerDown)
-  document.addEventListener('touchstart', onDocumentPointerDown)
-})
-onUnmounted(() => {
-  document.removeEventListener('selectionchange', onSelectionChange)
-  document.removeEventListener('mousedown', onDocumentPointerDown)
-  document.removeEventListener('touchstart', onDocumentPointerDown)
-  window.clearTimeout(selectionChangeTimer)
-})
+onMounted(() => document.addEventListener('mousedown', onDocumentMouseDown))
+onUnmounted(() => document.removeEventListener('mousedown', onDocumentMouseDown))
 
 function handleSentenceClick(id: string) {
   // A double-click to select a word also fires a click event on the sentence.
@@ -127,7 +95,7 @@ function cancelPopup() {
 </script>
 
 <template>
-  <div ref="containerEl" class="relative mx-auto max-w-[70ch]">
+  <div ref="containerEl" class="relative mx-auto max-w-[70ch]" @mouseup="onMouseUp">
     <TranscriptSentence
       v-for="sentence in sentences"
       :key="sentence.id"

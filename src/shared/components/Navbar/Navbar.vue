@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { LogOut, Menu, User } from '@lucide/vue'
-import { useI18n } from 'vue-i18n'
+import { LogOut, User } from '@lucide/vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +17,6 @@ defineProps<{
 defineEmits<{
   logout: []
 }>()
-
-const { t } = useI18n({ useScope: 'global' })
 </script>
 
 <template>
@@ -37,23 +34,6 @@ const { t } = useI18n({ useScope: 'global' })
           {{ link.label }}
         </RouterLink>
       </nav>
-      <!-- <nav> above is hidden below sm (640px) with no fallback, so mobile
-      needs its own way to reach Library/Vocabulary — reuses the same
-      DropdownMenu primitive as the user menu on the right, not a new
-      Bottom Navigation/Sidebar component (both cut from V1). -->
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          class="inline-flex size-8 items-center justify-center rounded-full bg-muted hover:bg-muted/70 sm:hidden"
-          :aria-label="t('common.nav.menu')"
-        >
-          <Menu class="size-4" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem v-for="link in links" :key="link.to" as-child>
-            <RouterLink :to="link.to">{{ link.label }}</RouterLink>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
 
     <div class="flex items-center gap-3">

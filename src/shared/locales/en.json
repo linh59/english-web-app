@@ -27,9 +27,6 @@
     "play": "Play",
     "pause": "Pause"
   },
-  "nav": {
-    "menu": "Menu"
-  },
   "transcript": {
     "sentenceCounter": "Sentence {current} of {total}",
     "sentenceCountTotal": "{total} sentences",

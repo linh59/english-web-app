@@ -17,7 +17,6 @@ defineEmits<{
     :style="{ top: `${top}px`, left: `${left}px` }"
     @mousedown.stop.prevent
     @mouseup.stop
-    @touchstart.stop.prevent
   >
     <button
       type="button"

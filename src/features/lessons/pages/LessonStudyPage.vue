@@ -10,7 +10,6 @@ import type { VocabularySaveInput } from '@/shared/components/Transcript/types'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Switch } from '@/shared/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
-import { useToast } from '@/shared/composables/useToast'
 import { useLessonsStore } from '../stores/lessons.store'
 import type { Lesson, LessonSentence } from '../types'
 
@@ -20,7 +19,6 @@ const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const lessonsStore = useLessonsStore()
 const vocabularyStore = useVocabularyStore()
-const toast = useToast()
 
 // Set when arriving from VocabularyCard's "listen again" button
 // (?t=<seconds>) — seeks to that exact moment once the audio's metadata has
@@ -165,26 +163,21 @@ function handleSentenceClick(sentenceId: string) {
   if (sentence) audioPlayerRef.value?.seekTo(sentence.startTime)
 }
 
-async function handleSaveVocabulary(payload: VocabularySaveInput) {
-  try {
-    await vocabularyStore.saveVocabulary({
-      word: payload.word,
-      meaning: payload.meaning,
-      definitionEn: payload.definitionEn,
-      exampleSentence: payload.exampleSentence,
-      lessonId: props.id,
-      startTime: payload.startTime,
-      endTime: payload.endTime,
-      partOfSpeech: payload.partOfSpeech,
-      wordType: payload.wordType,
-      cefrLevel: payload.cefrLevel,
-      synonyms: payload.synonyms,
-      antonyms: payload.antonyms,
-    })
-    toast.success(t('vocabulary.toast.saved', { word: payload.word }))
-  } catch {
-    toast.error(t('common.error.generic'))
-  }
+function handleSaveVocabulary(payload: VocabularySaveInput) {
+  vocabularyStore.saveVocabulary({
+    word: payload.word,
+    meaning: payload.meaning,
+    definitionEn: payload.definitionEn,
+    exampleSentence: payload.exampleSentence,
+    lessonId: props.id,
+    startTime: payload.startTime,
+    endTime: payload.endTime,
+    partOfSpeech: payload.partOfSpeech,
+    wordType: payload.wordType,
+    cefrLevel: payload.cefrLevel,
+    synonyms: payload.synonyms,
+    antonyms: payload.antonyms,
+  })
 }
 </script>
 
