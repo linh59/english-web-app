@@ -6,7 +6,8 @@
     "passwordLabel": "Mật khẩu",
     "submit": "Đăng nhập",
     "noAccount": "Chưa có tài khoản?",
-    "signupLink": "Đăng ký"
+    "signupLink": "Đăng ký",
+    "forgotPasswordLink": "Quên mật khẩu?"
   },
   "signup": {
     "title": "Tạo tài khoản",
@@ -17,6 +18,22 @@
     "hasAccount": "Đã có tài khoản?",
     "loginLink": "Đăng nhập",
     "checkEmail": "Kiểm tra email để xác nhận tài khoản trước khi đăng nhập."
+  },
+  "forgotPassword": {
+    "title": "Đặt lại mật khẩu",
+    "subtitle": "Nhập email để nhận liên kết đặt lại mật khẩu",
+    "emailLabel": "Email",
+    "submit": "Gửi liên kết đặt lại",
+    "checkEmail": "Kiểm tra email để nhận liên kết đặt lại mật khẩu.",
+    "backToLogin": "Quay lại đăng nhập"
+  },
+  "resetPassword": {
+    "title": "Đặt mật khẩu mới",
+    "subtitle": "Chọn mật khẩu mới cho tài khoản của bạn",
+    "newPasswordLabel": "Mật khẩu mới",
+    "confirmPasswordLabel": "Xác nhận mật khẩu mới",
+    "submit": "Cập nhật mật khẩu",
+    "mismatch": "Mật khẩu xác nhận không khớp."
   },
   "logout": "Đăng xuất"
 }

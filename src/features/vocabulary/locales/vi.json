@@ -8,5 +8,24 @@
     "emptyTitle": "Chưa có từ vựng",
     "emptyDescription": "Chọn từ hoặc cụm từ khi đang học để lưu vào đây.",
     "noResultsTitle": "Không có kết quả"
+  },
+  "card": {
+    "listenAgain": "Nghe lại đúng ngữ cảnh",
+    "encounterCount": "Đã gặp {count} lần",
+    "editTitle": "Sửa từ vựng",
+    "deleteTitle": "Xóa từ này?"
+  },
+  "popup": {
+    "definitionEn": "Định nghĩa (Tiếng Anh)",
+    "meaningVi": "Nghĩa (Tiếng Việt)",
+    "synonyms": "Từ đồng nghĩa",
+    "antonyms": "Từ trái nghĩa"
+  },
+  "wordType": {
+    "singleWord": "Từ đơn",
+    "phrasalVerb": "Phrasal verb",
+    "idiom": "Idiom",
+    "collocation": "Collocation",
+    "phrase": "Cụm từ"
   }
 }

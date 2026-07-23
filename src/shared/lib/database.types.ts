@@ -37,6 +37,16 @@ export interface VocabularyRow {
   lesson_id: string | null
   word: string
   meaning: string | null
+  definition_en: string | null
   example_sentence: string | null
+  part_of_speech: string | null
+  word_type: string | null
+  cefr_level: string | null
+  synonyms: string[] | null
+  antonyms: string[] | null
+  start_time: number | null
+  end_time: number | null
+  encounter_count: number
   created_at: string
+  updated_at: string
 }

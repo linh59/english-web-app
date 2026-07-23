@@ -2,6 +2,7 @@
 import { Languages, LocateFixed } from '@lucide/vue'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { useVocabularyStore } from '@/features/vocabulary/stores/vocabulary.store'
 import AudioPlayer from '@/shared/components/AudioPlayer/AudioPlayer.vue'
 import Transcript from '@/shared/components/Transcript/Transcript.vue'
@@ -15,8 +16,20 @@ import type { Lesson, LessonSentence } from '../types'
 const props = defineProps<{ id: string }>()
 
 const { t } = useI18n({ useScope: 'global' })
+const route = useRoute()
 const lessonsStore = useLessonsStore()
 const vocabularyStore = useVocabularyStore()
+
+// Set when arriving from VocabularyCard's "listen again" button
+// (?t=<seconds>) — seeks to that exact moment once the audio's metadata has
+// loaded (seeking any earlier can silently no-op before duration is known).
+const pendingSeekTime = computed(() => {
+  const value = Number(route.query.t)
+  return Number.isFinite(value) ? value : null
+})
+function handleAudioReady() {
+  if (pendingSeekTime.value !== null) audioPlayerRef.value?.seekTo(pendingSeekTime.value)
+}
 
 const lesson = ref<Lesson | null>(null)
 const sentences = ref<LessonSentence[]>([])
@@ -151,7 +164,20 @@ function handleSentenceClick(sentenceId: string) {
 }
 
 function handleSaveVocabulary(payload: VocabularySaveInput) {
-  vocabularyStore.saveVocabulary({ ...payload, lessonId: props.id })
+  vocabularyStore.saveVocabulary({
+    word: payload.word,
+    meaning: payload.meaning,
+    definitionEn: payload.definitionEn,
+    exampleSentence: payload.exampleSentence,
+    lessonId: props.id,
+    startTime: payload.startTime,
+    endTime: payload.endTime,
+    partOfSpeech: payload.partOfSpeech,
+    wordType: payload.wordType,
+    cefrLevel: payload.cefrLevel,
+    synonyms: payload.synonyms,
+    antonyms: payload.antonyms,
+  })
 }
 </script>
 
@@ -166,7 +192,12 @@ function handleSaveVocabulary(payload: VocabularySaveInput) {
         ref="stickyRef"
         class="sticky top-0 z-20 -mx-4 space-y-2 bg-background/95 px-4 pb-3 pt-1 backdrop-blur-sm sm:-mx-8 sm:px-8"
       >
-        <AudioPlayer ref="audioPlayerRef" :src="audioUrl" @timeupdate="currentTime = $event" />
+        <AudioPlayer
+          ref="audioPlayerRef"
+          :src="audioUrl"
+          @timeupdate="currentTime = $event"
+          @loadedmetadata="handleAudioReady"
+        />
 
         <div
           v-if="lesson.status === 'done'"

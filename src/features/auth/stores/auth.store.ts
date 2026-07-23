@@ -55,5 +55,43 @@ export const useAuthStore = defineStore('auth', () => {
     await supabase.auth.signOut()
   }
 
-  return { user, session, initialized, loading, error, init, signUp, signIn, signOut }
+  async function sendPasswordResetEmail(email: string) {
+    loading.value = true
+    error.value = null
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    loading.value = false
+
+    if (resetError) {
+      error.value = resetError.message
+      throw resetError
+    }
+  }
+
+  async function updatePassword(newPassword: string) {
+    loading.value = true
+    error.value = null
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+    loading.value = false
+
+    if (updateError) {
+      error.value = updateError.message
+      throw updateError
+    }
+  }
+
+  return {
+    user,
+    session,
+    initialized,
+    loading,
+    error,
+    init,
+    signUp,
+    signIn,
+    signOut,
+    sendPasswordResetEmail,
+    updatePassword,
+  }
 })

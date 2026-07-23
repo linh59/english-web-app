@@ -2,10 +2,15 @@
   "save": "Lưu",
   "cancel": "Hủy",
   "delete": "Xóa",
+  "edit": "Sửa",
   "close": "Đóng",
   "confirm": "Xác nhận",
   "loading": "Đang tải...",
   "search": "Tìm kiếm",
+  "password": {
+    "show": "Hiện mật khẩu",
+    "hide": "Ẩn mật khẩu"
+  },
   "error": {
     "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "network": "Lỗi kết nối mạng. Kiểm tra mạng và thử lại."

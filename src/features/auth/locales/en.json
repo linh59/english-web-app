@@ -6,7 +6,8 @@
     "passwordLabel": "Password",
     "submit": "Log in",
     "noAccount": "Don't have an account?",
-    "signupLink": "Sign up"
+    "signupLink": "Sign up",
+    "forgotPasswordLink": "Forgot password?"
   },
   "signup": {
     "title": "Create your account",
@@ -17,6 +18,22 @@
     "hasAccount": "Already have an account?",
     "loginLink": "Log in",
     "checkEmail": "Check your email to confirm your account before logging in."
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we'll send you a reset link",
+    "emailLabel": "Email",
+    "submit": "Send reset link",
+    "checkEmail": "Check your email for a link to reset your password.",
+    "backToLogin": "Back to log in"
+  },
+  "resetPassword": {
+    "title": "Set a new password",
+    "subtitle": "Choose a new password for your account",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "submit": "Update password",
+    "mismatch": "Passwords do not match."
   },
   "logout": "Log out"
 }

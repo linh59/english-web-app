@@ -17,7 +17,15 @@ const emit = defineEmits<{
 }>()
 
 const containerEl = ref<HTMLElement>()
-const selection = ref<{ text: string; sentenceText: string; top: number; left: number } | null>(null)
+const selection = ref<{
+  text: string
+  sentenceText: string
+  sentenceId?: string
+  startTime?: number
+  endTime?: number
+  top: number
+  left: number
+} | null>(null)
 const showPopup = ref(false)
 
 function findSentenceId(node: Node | null): string | undefined {
@@ -44,6 +52,9 @@ function onMouseUp() {
   selection.value = {
     text,
     sentenceText: sentence?.text ?? text,
+    sentenceId: sentence?.id,
+    startTime: sentence?.startTime,
+    endTime: sentence?.endTime,
     top: rect.top - containerRect.top,
     left: rect.left - containerRect.left + rect.width / 2,
   }
@@ -71,13 +82,8 @@ function handleSentenceClick(id: string) {
   emit('sentence-click', id)
 }
 
-function handleSave(meaning: string) {
-  if (!selection.value) return
-  emit('save-vocabulary', {
-    word: selection.value.text,
-    meaning,
-    exampleSentence: selection.value.sentenceText,
-  })
+function handleSave(payload: VocabularySaveInput) {
+  emit('save-vocabulary', payload)
   selection.value = null
   showPopup.value = false
 }
@@ -112,6 +118,9 @@ function cancelPopup() {
       v-if="selection && showPopup"
       :word="selection.text"
       :example-sentence="selection.sentenceText"
+      :sentence-id="selection.sentenceId"
+      :start-time="selection.startTime"
+      :end-time="selection.endTime"
       :top="selection.top"
       :left="selection.left"
       @save="handleSave"

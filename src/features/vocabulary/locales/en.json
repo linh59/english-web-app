@@ -8,5 +8,24 @@
     "emptyTitle": "No vocabulary yet",
     "emptyDescription": "Select a word or phrase while studying to save it here.",
     "noResultsTitle": "No results"
+  },
+  "card": {
+    "listenAgain": "Listen again in context",
+    "encounterCount": "Seen {count} times",
+    "editTitle": "Edit vocabulary",
+    "deleteTitle": "Delete this word?"
+  },
+  "popup": {
+    "definitionEn": "Definition (English)",
+    "meaningVi": "Meaning (Vietnamese)",
+    "synonyms": "Synonyms",
+    "antonyms": "Antonyms"
+  },
+  "wordType": {
+    "singleWord": "Word",
+    "phrasalVerb": "Phrasal verb",
+    "idiom": "Idiom",
+    "collocation": "Collocation",
+    "phrase": "Phrase"
   }
 }

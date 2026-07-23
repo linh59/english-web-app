@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   timeupdate: [currentTime: number]
+  loadedmetadata: []
 }>()
 
 const audioEl = ref<HTMLAudioElement>()
@@ -50,6 +51,7 @@ function onTimeUpdate() {
 function onLoadedMetadata() {
   if (!audioEl.value) return
   duration.value = audioEl.value.duration
+  emit('loadedmetadata')
 }
 
 function onSeek(event: Event) {
