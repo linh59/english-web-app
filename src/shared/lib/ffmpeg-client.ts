@@ -47,8 +47,9 @@ export function loadFfmpeg(onProgress?: FfmpegLoadProgressCallback): Promise<FFm
 
 // Cheap duration probe via a plain <audio> element — avoids fully decoding
 // the file into memory (the whole problem this module's callers exist to
-// avoid) just to read one number.
-export function probeDuration(file: File): Promise<number> {
+// avoid) just to read one number. Accepts any Blob (not just File) so
+// callers can probe in-memory chunk blobs, not only the original upload.
+export function probeDuration(file: Blob): Promise<number> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file)
     const audio = new Audio()

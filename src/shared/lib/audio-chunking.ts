@@ -58,21 +58,37 @@ export async function chunkAudioFile(
     const chunkNames = entries.map((entry) => entry.name).filter((name) => name.startsWith(outputPrefix)).sort()
     writtenFiles.push(...chunkNames)
 
+    // `-c copy` cuts each segment on the nearest packet boundary to
+    // `segment_time`, not exactly at it — so a chunk's real duration always
+    // deviates slightly from the nominal `chunkSeconds`. Using `i *
+    // chunkSeconds` as the offset (the original approach) ignores that
+    // deviation and lets it accumulate linearly across chunks: harmless for
+    // a 2-chunk lesson, but tens of seconds off by the last chunk of a
+    // multi-hour file with 30+ chunks (verified against real >3h audio).
+    // Measuring each chunk's actual duration and carrying a running sum
+    // keeps every chunk's offset exact regardless of chunk count.
     const chunks: AudioChunk[] = []
+    let runningOffset = 0
     for (let i = 0; i < chunkNames.length; i++) {
       const data = await ffmpeg.readFile(chunkNames[i])
       const bytes = data as Uint8Array
-      const fallbackEnd = (i + 1) * chunkSeconds
+      // See audio-compression.ts for why this cast is safe (Blob/File only
+      // accept a concrete ArrayBuffer; ffmpeg.wasm types the backing
+      // buffer as ArrayBufferLike, which this build never actually uses
+      // as SharedArrayBuffer).
+      const blob = new Blob([bytes as unknown as BlobPart], { type: 'audio/mp4' })
+      const measuredDuration = await probeDuration(blob)
+      const actualDuration = Number.isFinite(measuredDuration) && measuredDuration > 0 ? measuredDuration : chunkSeconds
+
+      const startTime = runningOffset
+      const fallbackEnd = startTime + actualDuration
       chunks.push({
-        // See audio-compression.ts for why this cast is safe (Blob/File only
-        // accept a concrete ArrayBuffer; ffmpeg.wasm types the backing
-        // buffer as ArrayBufferLike, which this build never actually uses
-        // as SharedArrayBuffer).
-        blob: new Blob([bytes as unknown as BlobPart], { type: 'audio/mp4' }),
+        blob,
         mimeType: 'audio/mp4',
-        startTime: i * chunkSeconds,
+        startTime,
         endTime: Number.isFinite(totalDuration) && totalDuration > 0 ? Math.min(fallbackEnd, totalDuration) : fallbackEnd,
       })
+      runningOffset += actualDuration
     }
 
     return { chunks, totalDuration }

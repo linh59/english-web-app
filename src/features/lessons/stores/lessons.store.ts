@@ -321,6 +321,32 @@ export const useLessonsStore = defineStore('lessons', () => {
     processLessonAudio(id, file)
   }
 
+  // Regenerates timestamps (and, as a side effect, text + translation) for a
+  // `done` lesson whose start_time/end_time are wrong — e.g. lessons
+  // processed before the chunk-offset drift fix in audio-chunking.ts.
+  // Unlike retryLesson (which only fills in chunks missing after a failure),
+  // this always redoes every chunk: it deletes all existing sentences first
+  // (cascades to lesson_sentence_translations), so fetchCompletedChunks sees
+  // nothing to skip and processLessonAudio reprocesses the whole lesson.
+  // Re-spends full Gemini quota for the lesson — intentionally manual
+  // (per-lesson button), never triggered automatically.
+  async function retimestampLesson(id: string) {
+    const lesson = lessons.value.find((l) => l.id === id)
+    if (!lesson) return
+
+    const audioUrl = await getAudioSignedUrl(lesson.audioPath)
+    const response = await fetch(audioUrl)
+    const blob = await response.blob()
+    const filename = lesson.audioPath.split('/').pop()!
+    const file = new File([blob], filename, { type: blob.type })
+
+    const { error: deleteError } = await supabase.from('lesson_sentences').delete().eq('lesson_id', id)
+    if (deleteError) throw deleteError
+
+    await updateLessonRow(id, { status: 'processing', error_message: null, processing_step: null })
+    processLessonAudio(id, file)
+  }
+
   // Sentences for a lesson grouped by chunk_index, each flagged with whether it
   // already has a translation — used by translateLesson to resume at
   // chunk-level granularity, same as processLessonAudio does for transcription.
@@ -482,6 +508,7 @@ export const useLessonsStore = defineStore('lessons', () => {
     fetchLessons,
     uploadLesson,
     retryLesson,
+    retimestampLesson,
     deleteLesson,
     fetchLessonById,
     fetchLessonSentences,

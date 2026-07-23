@@ -9,8 +9,13 @@
     "deleteTitle": "Delete this lesson?",
     "deleteDescription": "This action cannot be undone.",
     "processingChunk": "Chunk {current}/{total}",
+    "actions": "Actions",
+    "retry": "Retry",
     "translate": "Translate to Vietnamese",
-    "translating": "Translating…"
+    "translating": "Translating…",
+    "retimestamp": "Fix timestamps",
+    "retimestampTitle": "Fix timestamps for this lesson?",
+    "retimestampDescription": "This deletes the current sentences and translations and re-processes the whole lesson from the original audio. It uses Gemini quota again for the full lesson and cannot be undone."
   },
   "upload": {
     "trigger": "Upload audio",

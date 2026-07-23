@@ -21,10 +21,42 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
 - Trang học: audio player phát file thật (signed URL), click câu để tua, bôi đen để lưu
   từ vựng. Đã nâng cấp UI/UX (xem [[decisions]]): transcript dạng block mỗi câu một
   dòng, active sentence có border trái + dim câu khác, auto-scroll theo câu đang phát
-  (giữ ở ~35% viewport), toggle bật/tắt auto-scroll + nút "về câu đang phát", player
-  sticky ở top khi cuộn, phím tắt (Space = play/pause, ←/→ = chuyển câu), touch target
-  nút Play ≥44px, bỏ waveform giả (chỉ còn 1 progress bar).
+  (giữ ở ~35% viewport), phím tắt (Space = play/pause, ←/→ = chuyển câu), touch target
+  nút Play ≥44px, bỏ waveform giả (chỉ còn 1 progress bar). (Bố cục player/auto-scroll đã
+  đổi lại tiếp theo phản hồi UX mobile — xem bullet riêng bên dưới.)
 - Trang từ vựng: danh sách + tìm kiếm.
+- **Mobile UX overhaul cho trang học** (phản hồi thực tế sau khi dùng trên điện thoại):
+  - **Resume vị trí nghe**: cột `last_position_seconds` mới trên bảng `lessons`, ghi lại
+    qua nhiều trigger (pause, tab bị ẩn/`visibilitychange`, đóng tab/`pagehide`, rời trang
+    trong app, cộng thêm interval 5s làm lưới an toàn) chứ không chỉ 1 sự kiện — vì audio
+    thường vẫn đang phát (chưa pause) đúng lúc người dùng tắt màn hình hay chuyển tab.
+    Tự động seek lại đúng chỗ khi mở lại bài học (trừ khi có deep-link `?t=` từ trang từ
+    vựng, cái đó ưu tiên hơn). Đồng bộ qua Supabase (không phải localStorage) nên nghe dở
+    trên điện thoại rồi mở laptop vẫn tiếp tục đúng chỗ.
+  - **Mobile navigation**: thêm `BottomNav` (tab Library/Từ vựng, `sm:hidden`) — trước đó
+    `Navbar` ẩn hẳn 2 link này dưới breakpoint `sm` mà không có gì thay thế, trên điện
+    thoại không có cách nào chuyển trang. Tự ẩn khi đang ở trang học để nhường không gian
+    cho transcript, thay bằng nút back tích hợp trong thanh player.
+  - **Lưu từ vựng trên mobile**: `Transcript.vue` thêm `touchend`/`touchstart` (trước đó
+    luồng chọn-từ chỉ có `mouseup`/`mousedown`, 0 touch listener nào). `VocabularyPopup`
+    giờ responsive theo `useMediaQuery('(min-width: 640px)')`: dưới `sm` render thành
+    bottom sheet full-width trượt lên từ đáy (nút Save/Cancel ≥44px), trên `sm` giữ nguyên
+    popup nổi định vị theo toạ độ chọn chữ như cũ — vì popup rộng cố định 288px định vị
+    theo pixel tuyệt đối từng có thể tràn ra ngoài màn hình hẹp.
+  - **Bố cục player + bỏ toggle Auto-scroll**: `AudioPlayer` chuyển từ sticky-top (gộp
+    chung khối với thanh options, chiếm nhiều chiều cao đầu trang) sang thanh riêng
+    `LessonPlayerBar` cố định đáy màn hình (mọi breakpoint, không chỉ mobile — cùng
+    pattern Spotify/YouTube Music). Thanh trên giờ chỉ còn counter + toggle dịch, rất
+    mỏng. Toggle Auto-scroll bị xoá hẳn (từng có bug thật: bật lại switch không cuộn
+    ngay, chỉ cần cuộn 1px là tự tắt — khiến người dùng thấy nó "luôn disable"), thay
+    bằng 1 nút nổi "về câu đang phát" tự hiện khi cần; kèm sửa 2 nguyên nhân gốc (ngưỡng
+    scroll trước khi tắt auto-follow, `ResizeObserver` thay vì chỉ dựa `window resize`).
+    Logic auto-scroll tách ra composable `useAutoFollowScroll` (feature `lessons`) để
+    giữ trang học dưới ~300 dòng theo [[vue]].
+  - Đã type-check (`vue-tsc -b`) + `npm run build` sạch, dev server boot/serve bình
+    thường. **Chưa** test tương tác thật (touch thật, resume qua lại thiết bị, bottom
+    sheet lưu từ vựng) — môi trường code lúc làm không có trình duyệt tương tác/tài khoản
+    thật để verify, xem mục "Bước tiếp theo" bên dưới.
 - Đã verify toàn bộ pipeline bằng **audio thật** (~1h50m, audiobook thật) trên project
   Supabase thật (không mock): 19 chunk, 1107 câu, nội dung + timestamp đúng, click-seek
   chính xác, Retry đã tự resume đúng giữa một lần chạy thật.
@@ -67,6 +99,7 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
 | Retry khi xử lý lỗi giữa chừng | Hoàn thành, đã test thật (resume đúng, không trùng dữ liệu) |
 | Trang học — audio player + transcript | Hoàn thành phần lõi + đã nâng cấp UI/UX (Phase 1+2), đã verify bằng Playwright thật (desktop, mobile, dark mode) |
 | Trang từ vựng | Hoàn thành (chưa qua vòng review UI/UX riêng) |
+| Mobile UX overhaul (resume vị trí, bottom nav, lưu từ vựng bottom sheet, bố cục player) | Code xong, type-check + build sạch, migration đã áp dụng lên Supabase thật — **chưa** test tương tác thật trên thiết bị/trình duyệt thật |
 | `fetchLessonSentences` phân trang | Hoàn thành, đã fix bug 1000-row |
 | Tự động nén audio trước upload | Hoàn thành, đã test thật (file 436MB + file ngắn full pipeline) |
 | Chunking bằng ffmpeg segment (thay decode PCM) | Hoàn thành, đã test thật (không còn lỗi "Unable to decode audio data" với file dài) |
@@ -87,3 +120,8 @@ description: Trạng thái hiện tại của V1 — phần nào đã xong/đã 
    lại" trên `LessonCard` — mỗi bài ~17-18 chunk nên tốn tương ứng ~17-18 lệnh gọi Gemini
    nếu bấm (chưa bấm, cố tình để dành quota, chỉ verify luồng "Dịch lại" trên 1 bài học
    test ngắn 4 câu).
+6. Test tương tác thật (touch thật trên điện thoại, hoặc ít nhất DevTools mobile
+   emulation) cho mobile UX overhaul vừa làm: resume vị trí nghe qua lại giữa các trang/
+   thiết bị, bottom nav, bottom sheet lưu từ vựng, nút nổi "về câu đang phát". Đã
+   type-check/build sạch và migration đã lên Supabase thật, nhưng chưa ai thao tác thử
+   trên UI thật.

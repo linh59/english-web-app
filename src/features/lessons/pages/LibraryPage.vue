@@ -23,6 +23,7 @@ const router = useRouter()
 const lessonsStore = useLessonsStore()
 
 const pendingDeleteId = ref<string | null>(null)
+const pendingRetimestampId = ref<string | null>(null)
 const translationProgress = ref(new Map<string, { sentenceCount: number; translatedCount: number }>())
 
 onMounted(async () => {
@@ -70,6 +71,12 @@ async function confirmDelete() {
   await lessonsStore.deleteLesson(pendingDeleteId.value)
   pendingDeleteId.value = null
 }
+
+async function confirmRetimestamp() {
+  if (!pendingRetimestampId.value) return
+  await lessonsStore.retimestampLesson(pendingRetimestampId.value)
+  pendingRetimestampId.value = null
+}
 </script>
 
 <template>
@@ -104,6 +111,7 @@ async function confirmDelete() {
         @delete="pendingDeleteId = lesson.id"
         @retry="lessonsStore.retryLesson(lesson.id)"
         @translate="handleTranslate(lesson.id)"
+        @retimestamp="pendingRetimestampId = lesson.id"
       />
     </div>
 
@@ -116,6 +124,19 @@ async function confirmDelete() {
         <DialogFooter>
           <Button variant="ghost" @click="pendingDeleteId = null">{{ t('common.cancel') }}</Button>
           <Button variant="destructive" @click="confirmDelete">{{ t('common.delete') }}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog :open="!!pendingRetimestampId" @update:open="(value) => !value && (pendingRetimestampId = null)">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ t('lessons.library.retimestampTitle') }}</DialogTitle>
+          <DialogDescription>{{ t('lessons.library.retimestampDescription') }}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" @click="pendingRetimestampId = null">{{ t('common.cancel') }}</Button>
+          <Button variant="destructive" @click="confirmRetimestamp">{{ t('lessons.library.retimestamp') }}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

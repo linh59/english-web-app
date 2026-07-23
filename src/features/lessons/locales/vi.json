@@ -9,8 +9,13 @@
     "deleteTitle": "Xóa bài học này?",
     "deleteDescription": "Hành động này không thể hoàn tác.",
     "processingChunk": "Đoạn {current}/{total}",
+    "actions": "Tùy chọn",
+    "retry": "Thử lại",
     "translate": "Dịch sang tiếng Việt",
-    "translating": "Đang dịch…"
+    "translating": "Đang dịch…",
+    "retimestamp": "Sửa lại timestamp",
+    "retimestampTitle": "Sửa lại timestamp cho bài học này?",
+    "retimestampDescription": "Thao tác này sẽ xóa câu và bản dịch hiện tại, xử lý lại toàn bộ bài học từ audio gốc. Tốn lại quota Gemini cho cả bài và không thể hoàn tác."
   },
   "upload": {
     "trigger": "Upload audio",

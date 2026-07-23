@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { Languages, Loader2, RotateCw, Trash2 } from '@lucide/vue'
+import { Clock, Languages, Loader2, MoreVertical, RotateCw, Trash2 } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Badge } from '@/shared/components/ui/badge'
-import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import Progress from '@/shared/components/Progress/Progress.vue'
 import { formatDuration } from '@/shared/lib/format'
 
@@ -29,6 +35,7 @@ defineEmits<{
   delete: []
   retry: []
   translate: []
+  retimestamp: []
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
@@ -55,39 +62,40 @@ const chunkProgress = computed(() => {
 <template>
   <Card class="cursor-pointer transition-shadow hover:shadow-md" @click="$emit('open')">
     <CardHeader>
-      <div class="flex items-start justify-between gap-2">
-        <CardTitle class="truncate text-sm">{{ title }}</CardTitle>
-        <div class="flex shrink-0 items-center">
-          <Button
-            v-if="status === 'failed'"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Retry"
-            class="text-muted-foreground hover:text-foreground"
-            @click.stop="$emit('retry')"
-          >
-            <RotateCw />
-          </Button>
-          <Button
-            v-if="status === 'done' && (needsTranslation || translationStatus === 'processing')"
-            variant="ghost"
-            size="icon-sm"
-            :aria-label="translationStatus === 'processing' ? t('lessons.library.translating') : t('lessons.library.translate')"
-            class="text-muted-foreground hover:text-foreground"
-            @click.stop="$emit('translate')"
+      <div class="flex min-w-0 items-start justify-between gap-2">
+        <CardTitle class="min-w-0 flex-1 truncate text-sm">{{ title }}</CardTitle>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            :aria-label="t('lessons.library.actions')"
+            class="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            @click.stop
           >
             <Loader2 v-if="translationStatus === 'processing'" class="size-4 animate-spin" />
-            <Languages v-else />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            class="text-muted-foreground hover:text-destructive"
-            @click.stop="$emit('delete')"
-          >
-            <Trash2 />
-          </Button>
-        </div>
+            <MoreVertical v-else class="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" @click.stop>
+            <DropdownMenuItem v-if="status === 'failed'" @click="$emit('retry')">
+              <RotateCw class="size-3.5" />
+              {{ t('lessons.library.retry') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-if="status === 'done' && (needsTranslation || translationStatus === 'processing')"
+              @click="$emit('translate')"
+            >
+              <Languages class="size-3.5" />
+              {{ translationStatus === 'processing' ? t('lessons.library.translating') : t('lessons.library.translate') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="status === 'done'" @click="$emit('retimestamp')">
+              <Clock class="size-3.5" />
+              {{ t('lessons.library.retimestamp') }}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" @click="$emit('delete')">
+              <Trash2 class="size-3.5" />
+              {{ t('common.delete') }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </CardHeader>
     <CardContent class="space-y-2">
